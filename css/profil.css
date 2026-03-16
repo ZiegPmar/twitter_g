@@ -4,7 +4,7 @@
     position: fixed;
     left: 0;
     top: 0;
-    background: #fdfdfd;
+    background: #000000;
     border-right: 1px solid #eaeaea;
     padding: 20px;
     overflow-y: auto;
@@ -19,7 +19,8 @@
 }
 
 .text-sidebar{
-    text-align: center;
+    text-align: left;
+    padding-top: 30px;
 }
 
 .sommaire-section { margin-bottom: 20px; }
@@ -27,20 +28,20 @@
 .sommaire-section p {
     font-size: 12px;
     font-weight: bold;
-    color: #999;
+    color: #dedede;
     margin-bottom: 8px;
 }
 
 .sommaire-section a {
     display: block;
     text-decoration: none;
-    color: #333;
+    color: #cdcdcd;
     font-size: 30px;
     margin-bottom: 6px;
     transition: color 0.2s;
 }
 
-.sommaire-section a:hover { color: #DA251D; }
+.sommaire-section a:hover { color: #9EC2AC; }
 
 .back-home {
     display: inline-block;
@@ -54,5 +55,13 @@
     max-width: 1100px;
     margin-left: 240px; 
     flex-grow: 1;
+}
+
+.logo img{
+    display: block;
+    margin: 0 auto;
+    width: 150px;
+    align-items: center;  
+
 }
 
