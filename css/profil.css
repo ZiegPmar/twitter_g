@@ -18,6 +18,10 @@
     margin-bottom: 20px;
 }
 
+.text-sidebar{
+    text-align: center;
+}
+
 .sommaire-section { margin-bottom: 20px; }
 
 .sommaire-section p {
@@ -31,7 +35,7 @@
     display: block;
     text-decoration: none;
     color: #333;
-    font-size: 13px;
+    font-size: 30px;
     margin-bottom: 6px;
     transition: color 0.2s;
 }
@@ -51,3 +55,4 @@
     margin-left: 240px; 
     flex-grow: 1;
 }
+
