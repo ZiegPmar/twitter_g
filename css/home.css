@@ -1,0 +1,358 @@
+body {
+    margin: 0;
+    background-color: #141313;
+}
+
+/* --- Sidebar début --- */
+
+.sidebar-sommaire {
+    box-sizing: border-box;
+    width: 240px;
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    background: #000000;
+    border-right: 1px solid #333;
+    padding: 20px;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+}
+
+.logo {
+    display: block;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.logo img {
+    width: 120px;
+    height: auto;
+}
+
+.sommaire-section {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.sommaire-section a {
+    text-decoration: none;
+    color: #cdcdcd;
+    font-size: 22px;
+    transition: color 0.2s;
+    display: flex;
+    align-items: center;
+}
+
+.sommaire-section a:hover {
+    color: #9EC2AC;
+}
+
+.fa-solid {
+    width: 25px;
+    margin-right: 10px;
+}
+
+.profil-section {
+    border-top: 1px solid #333;
+    padding-top: 15px;
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    overflow: hidden;
+}
+
+.profil-section img {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid #444;
+    flex-shrink: 0;
+}
+
+.profil-section a {
+    text-decoration: none;
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.profil-section a:hover {
+    text-decoration: underline;
+}
+
+.text-sidebar {
+    padding-top: 10px;
+}
+
+/* --- Sidebar fin --- */
+
+/* --- Sidebar right début --- */
+
+.sidebar-right-sommaire {
+    box-sizing: border-box;
+    width: 240px;
+    height: 100vh;
+    position: fixed;
+    right: 0;
+    top: 0;
+    background: #000000;
+    border-left: 1px solid #333; 
+    padding: 20px;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+}
+
+.sommaire-right-section {
+    flex-grow: 1; 
+    display: flex;
+    flex-direction: column;
+    gap: 15px; 
+}
+
+.sommaire-right-section a {
+    text-decoration: none;
+    color: #cdcdcd;
+    font-size: 22px;
+    transition: color 0.2s;
+    display: flex;
+    align-items: center;
+}
+
+.sommaire-right-section a:hover {
+    color: #9EC2AC;
+}
+
+.text-right-sidebar{
+    padding-top: 10px;
+}
+
+/* --- Sidebar right fin --- */
+
+
+/* --- Méteo --- */
+
+.weather-card {
+    background: linear-gradient(135deg, #008bba, #007298);
+    color: white;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    padding: 25px;
+    border-radius: 20px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    transition: transform 0.3s ease;
+}
+
+.weather-card:hover {
+    transform: translateY(-5px);
+}
+
+.weather-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.city { 
+    font-weight: bold; 
+    font-size: 1.2rem; 
+    text-transform: uppercase; 
+    letter-spacing: 1px; 
+}
+
+.date { 
+    font-size: 0.8rem; 
+    opacity: 0.8; 
+}
+
+.weather-main {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.temp-container { 
+    font-size: 2.5rem; 
+    font-weight: 800; 
+}
+
+.unit { 
+    font-size: 1.5rem; 
+    vertical-align: top; 
+    margin-top: 10px; 
+    display: inline-block; 
+}
+
+.weather-icon { 
+    font-size: 3rem; 
+    text-align: center;
+    display: block;
+}
+
+.weather-details {
+    border-top: 1px solid rgba(255,255,255,0.2);
+    padding-top: 15px;
+    display: flex;
+    justify-content: center;
+}
+
+.detail-item { 
+    text-align: center; 
+}
+
+.label { 
+    display: block; 
+    font-size: 0.7rem; 
+    opacity: 0.7; 
+    margin-bottom: 5px; 
+}
+
+#vent-affichage { 
+    font-weight: 600; 
+    font-size: 1rem; 
+}
+
+
+/* --- Layout principal --- */
+.layout {
+    margin-left: 0px;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+    transition: transform 0.2s ease;
+}
+
+/* Feed */
+.feed {
+    width: 100%;
+    max-width: 950px;
+}
+
+.feed-container {
+    display: flex;
+    flex-direction: column;   
+}
+
+/* Post */
+.post {
+    display: flex;
+    gap: 15px;
+    padding: 20px;
+    border: 1px solid #333;
+    color: white;
+    background: #111;
+
+}
+
+.post-avatar img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.post-body {
+    flex: 1;
+}
+
+.post-img {
+    margin-top: 12px;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.post-img img {
+    width: 50%;
+    height: auto;
+    display: block;
+    border-radius: 12px;
+}
+
+.post-header {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.post-username {
+    color: #9EC2AC;
+}
+
+.post-time {
+    color: #ccc;
+}
+
+.post-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.post-actions button {
+    background: none;
+    border: none;
+    color: #ccc;
+    cursor: pointer;
+}
+
+.post-actions button:hover i {
+    color: #9EC2AC;
+}
+
+/* Refresh */
+
+.pull-refresh-bottom {
+    position: fixed;
+    bottom: 0;
+    left: 240px;
+    width: calc(100% - 240px);
+    height: 0;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    background: #1a2e24; /* fond vert foncé distinct */
+    border-top: 1px solid #9EC2AC;
+    z-index: 100;
+    pointer-events: none;
+    transition: height 0.2s ease;
+}
+
+.pull-refresh-bottom .pull-refresh-content {
+    height: 60px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #9EC2AC;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.pull-refresh-bottom.visible .pull-refresh-content {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.pull-refresh-bottom.refreshing .pull-refresh-content i {
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}

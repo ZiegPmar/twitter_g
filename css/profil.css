@@ -1,67 +1,94 @@
+/* --- Sidebar début --- */
+
 .sidebar-sommaire {
-    width: 200px;
+    box-sizing: border-box;
+    width: 240px;
     height: 100vh;
     position: fixed;
     left: 0;
     top: 0;
     background: #000000;
-    border-right: 1px solid #eaeaea;
+    border-right: 1px solid #333; 
     padding: 20px;
-    overflow-y: auto;
     z-index: 100;
+    display: flex;
+    flex-direction: column;
 }
 
-.sidebar-sommaire {
-    font-size: 14px;
-    border-bottom: 3px solid #DA251D;
-    padding-bottom: 5px;
-    margin-bottom: 20px;
+.logo {
+    display: block;
+    margin-bottom: 30px;
+    text-align: center;
 }
 
-.text-sidebar{
-    text-align: left;
-    padding-top: 30px;
+.logo img {
+    width: 120px;
+    height: auto;
 }
 
-.sommaire-section { margin-bottom: 20px; }
-
-.sommaire-section p {
-    font-size: 12px;
-    font-weight: bold;
-    color: #dedede;
-    margin-bottom: 8px;
+.sommaire-section {
+    flex-grow: 1; 
+    display: flex;
+    flex-direction: column;
+    gap: 15px; 
 }
 
 .sommaire-section a {
-    display: block;
     text-decoration: none;
     color: #cdcdcd;
-    font-size: 30px;
-    margin-bottom: 6px;
+    font-size: 22px;
     transition: color 0.2s;
+    display: flex;
+    align-items: center;
 }
 
-.sommaire-section a:hover { color: #9EC2AC; }
+.sommaire-section a:hover {
+    color: #9EC2AC;
+}
 
-.back-home {
-    display: inline-block;
-    margin-top: 20px;
-    font-size: 12px;
-    color: #666;
+.fa-solid {
+    width: 25px;
+    margin-right: 10px;
+}
+
+.profil-section {
+    border-top: 1px solid #333;
+    padding-top: 15px;
+    margin-top: auto; 
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%; 
+    overflow: hidden; 
+}
+
+.profil-section img {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid #444;
+    flex-shrink: 0; 
+}
+
+.profil-info {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.profil-section a {
     text-decoration: none;
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; 
 }
 
-.main {
-    max-width: 1100px;
-    margin-left: 240px; 
-    flex-grow: 1;
+.profil-section a:hover {
+    text-decoration: underline;
 }
 
-.logo img{
-    display: block;
-    margin: 0 auto;
-    width: 150px;
-    align-items: center;  
-
-}
-
+/* --- Sidebar fin --- */
