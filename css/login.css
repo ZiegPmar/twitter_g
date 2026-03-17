@@ -1,0 +1,96 @@
+body{
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start; 
+    align-items: center; 
+    background-color: black;
+}
+
+.logo{
+    width: 150px;
+    margin-top: 20px;
+    margin-bottom: 40px;
+}
+
+.login_page{
+    width: 700px;
+    height: 350px;
+    background: #141313; 
+    border-radius: 10px;
+    color: #e3e3e3;
+}
+
+.username{
+    margin-left: 20px;
+    margin-bottom: 35px;
+}
+
+.username h1{
+    font-size: 30px;
+    margin-bottom: 10px;
+}
+
+.username input[type="text"] {
+    width: 500px; 
+    height: 25px;
+    padding: 10px 10px;
+    font-size: 16px;    
+    border-radius: 10px;
+    transition: border-color 0.3s;
+}
+
+.username input[type="text"]:focus {
+    border-color: #00CFF6; 
+    outline: none;
+}
+
+.password{
+    margin-left: 20px;
+    margin-bottom: 50px;
+}
+
+.password h1{
+    font-size: 30px;
+    margin-bottom: 10px;
+}
+
+.password input[type="password"] {
+    width: 500px;        
+    height: 25px;        
+    padding: 10px 10px; 
+    font-size: 16px;    
+    border-radius: 10px;
+    transition: border-color 0.3s;
+}
+
+.password input[type="password"]:focus {
+    border-color: #00CFF6; 
+    outline: none;
+}
+
+.login_page button{
+    margin-left: 510px;
+    width: 25%;
+    padding: 12px;
+    background-color: #D6BE91;
+    color: black;
+    font-size: 16px;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.create_account {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.create_account a{
+    font-size: 20px; 
+    color: white;
+}
+
+.create_account a:hover {
+   color: #00CFF6;
+}
