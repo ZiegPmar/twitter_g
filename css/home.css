@@ -1,0 +1,137 @@
+body {
+    margin: 0;
+    background-color: #141313;
+}
+
+
+/* --- Layout principal --- */
+.layout {
+    margin-left: 0px;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+    transition: transform 0.2s ease;
+}
+
+/* Feed */
+.feed {
+    width: 100%;
+    max-width: 950px;
+}
+
+.feed-container {
+    display: flex;
+    flex-direction: column;   
+}
+
+/* Post */
+.post {
+    display: flex;
+    gap: 15px;
+    padding: 20px;
+    border: 1px solid #333;
+    color: white;
+    background: #111;
+
+}
+
+.post-avatar img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.post-body {
+    flex: 1;
+}
+
+.post-img {
+    margin-top: 12px;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.post-img img {
+    width: 50%;
+    height: auto;
+    display: block;
+    border-radius: 12px;
+}
+
+.post-header {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.post-username {
+    color: #9EC2AC;
+}
+
+.post-time {
+    color: #ccc;
+}
+
+.post-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.post-actions button {
+    background: none;
+    border: none;
+    color: #ccc;
+    cursor: pointer;
+}
+
+.post-actions button:hover i {
+    color: #9EC2AC;
+}
+
+/* Refresh */
+
+.pull-refresh-bottom {
+    position: fixed;
+    bottom: 0;
+    left: 240px;
+    width: calc(100% - 240px);
+    height: 0;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    background: #1a2e24; /* fond vert foncé distinct */
+    border-top: 1px solid #9EC2AC;
+    z-index: 100;
+    pointer-events: none;
+    transition: height 0.2s ease;
+}
+
+.pull-refresh-bottom .pull-refresh-content {
+    height: 60px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #9EC2AC;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.pull-refresh-bottom.visible .pull-refresh-content {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.pull-refresh-bottom.refreshing .pull-refresh-content i {
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
