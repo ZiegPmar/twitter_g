@@ -1,0 +1,38 @@
+.sidebar-right-sommaire {
+    box-sizing: border-box;
+    width: 240px;
+    height: 100vh;
+    position: fixed;
+    right: 0;
+    top: 0;
+    background: #000000;
+    border-left: 1px solid #333; 
+    padding: 20px;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+}
+
+.sommaire-right-section {
+    flex-grow: 1; 
+    display: flex;
+    flex-direction: column;
+    gap: 15px; 
+}
+
+.sommaire-right-section a {
+    text-decoration: none;
+    color: #cdcdcd;
+    font-size: 22px;
+    transition: color 0.2s;
+    display: flex;
+    align-items: center;
+}
+
+.sommaire-right-section a:hover {
+    color: #9EC2AC;
+}
+
+.text-right-sidebar{
+    padding-top: 10px;
+}
