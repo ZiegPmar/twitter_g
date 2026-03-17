@@ -1,0 +1,94 @@
+.sidebar-sommaire {
+    box-sizing: border-box;
+    width: 240px;
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    background: #000000;
+    border-right: 1px solid #333; 
+    padding: 20px;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+}
+
+.logo {
+    display: block;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.logo img {
+    width: 120px;
+    height: auto;
+}
+
+.sommaire-section {
+    flex-grow: 1; 
+    display: flex;
+    flex-direction: column;
+    gap: 15px; 
+}
+
+.sommaire-section a {
+    text-decoration: none;
+    color: #cdcdcd;
+    font-size: 22px;
+    transition: color 0.2s;
+    display: flex;
+    align-items: center;
+}
+
+.sommaire-section a:hover {
+    color: #9EC2AC;
+}
+
+.fa-solid {
+    width: 25px;
+    margin-right: 10px;
+}
+
+.profil-section {
+    border-top: 1px solid #333;
+    padding-top: 15px;
+    margin-top: auto; 
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%; 
+    overflow: hidden; 
+}
+
+.profil-section img {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid #444;
+    flex-shrink: 0; 
+}
+
+.profil-info {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.profil-section a {
+    text-decoration: none;
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; 
+}
+
+.profil-section a:hover {
+    text-decoration: underline;
+}
+
+.text-sidebar{
+    padding-top: 10px;
+}
