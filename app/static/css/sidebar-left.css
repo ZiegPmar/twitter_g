@@ -5,7 +5,7 @@
     position: fixed;
     left: 0;
     top: 0;
-    background: #000000;
+    background: #141313;
     border-right: 1px solid #333; 
     padding: 20px;
     z-index: 100;
@@ -41,7 +41,7 @@
 }
 
 .sommaire-section a:hover {
-    color: #9EC2AC;
+    color: #00CFF6;
 }
 
 .fa-solid {
