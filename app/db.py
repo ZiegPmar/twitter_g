@@ -1,38 +1,27 @@
-import sqlite3
-from pathlib import Path
-from flask import current_app, g
-
+import pymysql
+import os
+from flask import g
 
 def get_db():
-    if "db" not in g:
-        db_path = current_app.config["DATABASE"]
-        Path(db_path).parent.mkdir(parents=True, exist_ok=True)
-
-        g.db = sqlite3.connect(db_path)
-        g.db.row_factory = sqlite3.Row
-
-        g.db.execute("PRAGMA foreign_keys = ON")
-
+    if 'db' not in g:
+        g.db = pymysql.connect(
+            # On sépare bien l'IP et le port !
+            host='212.227.84.80', # Juste l'IP, sans les deux points
+            port=3307,            # Le port ici, SANS guillemets (c'est un chiffre)
+            
+            user='root',     # Mets ton vrai user
+            password= 'root_password', # Mets ton vrai mdp
+            database= 'g_twitter',     # Mets ta vraie BDD
+            
+            cursorclass=pymysql.cursors.DictCursor,
+            autocommit=True
+        )
     return g.db
 
-
 def close_db(e=None):
-    db = g.pop("db", None)
+    db = g.pop('db', None)
     if db is not None:
         db.close()
 
-
-def init_db():
-    db = get_db()
-
-    with current_app.open_resource("schema.sql") as f:
-        db.executescript(f.read().decode("utf-8"))
-
-
 def init_app(app):
     app.teardown_appcontext(close_db)
-
-    @app.cli.command("init-db")
-    def init_db_command():
-        init_db()
-        print("Base initialisée.")
