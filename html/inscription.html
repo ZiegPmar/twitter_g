@@ -9,9 +9,9 @@
 
 <body>
     <a>
-        <img src="../img/logo.webp" alt="Logo" class="logo"/>
+        <img src="{{ url_for('static', filename='img/logo.webp') }}" alt="Logo" class="logo"/>
     </a>
-    <div class="login_page">
+    <div class="create_account">
         <div class="username">
             <h1>Identifiant :</h1>
             <form>
@@ -32,7 +32,7 @@
         </div>
         <button>S'inscrire</button>
     </div>
-    <div class="create_account">
+    <div class="login_page">
         <a href="login.html" class="clickable-text">Connection</a>
     </div>
 </body>
