@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/profil.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/edit_profil.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar-left.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar-right.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">a
@@ -34,63 +34,55 @@
     
 
     <div class="main">
+    <form action="{{ url_for('main.update_profile') }}" method="POST" enctype="multipart/form-data">
+        <div class="profile-nav-header">
+            <div class="header-left-group">
+                <a href="{{ url_for('main.monprofil') }}" class="back-btn"><i class="fa-solid fa-xmark"></i></a>
+                <h2 class="header-title">Éditer le profil</h2>
+            </div>
+            <button type="submit" class="save-btn">Enregistrer</button>
+        </div>
+
         <div class="profile-container">
-            <div class="banner">
+            <div class="banner edit-mode">
                 {% if current_user.banner_url %}
                     <img src="{{ url_for('static', filename='img/banniere/' + current_user.banner_url) }}" alt="Banner">
                 {% else %}
-                    <div style="background-color: #333; width: 100%; height: 100%;"></div> 
+                    <div class="banner-placeholder"></div> 
                 {% endif %}
+                <label for="banner_input" class="camera-icon"><i class="fa-solid fa-camera"></i></label>
+                <input type="file" id="banner_input" name="banner" accept="image/*" hidden>
             </div>
     
             <div class="profile-info-section">
                 <div class="profile-header">
-                    <div class="avatar-container">
-                        {% if current_user.avatar_url %}
-                            <img src="{{ url_for('static', filename='img/Avatar/' + current_user.avatar_url) }}" alt="Avatar" class="profile-pdp">
-                        {% else %}
-                            <img src="{{ url_for('static', filename='img/Avatar/default_avatar.png') }}" alt="Avatar" class="profile-pdp">
-                        {% endif %}
+                    <div class="avatar-container edit-mode">
+                        <img src="{{ url_for('static', filename='img/Avatar/' + current_user.avatar_url) if current_user.avatar_url else url_for('static', filename='img/Avatar/default_avatar.png') }}" class="profile-pdp">
+                        <label for="avatar_input" class="camera-icon"><i class="fa-solid fa-camera"></i></label>
+                        <input type="file" id="avatar_input" name="avatar" accept="image/*" hidden>
                     </div>
-                    <a href="{{ url_for('main.edit_profile') }}" class="edit-btn" style="text-decoration: none; text-align: center;">
-                        Edit profile
-                    </a>
                 </div>
     
-                <div class="user-details">
-                    <h1 class="user-name" href="{{ url_for('main.profile', username=current_user['username']) }}">{{ current_user['display_name'] }}</h1>
-                    
-                    <div class="user-bio">
-                        {% if current_user.bio %}
-                            <p>{{ current_user.bio }}</p>
-                        {% else %}
-                            <p style="color: #444; font-style: italic;">Pas encore de bio...</p>
-                        {% endif %}
+                <div class="user-details-edit">
+                    <div class="input-group">
+                        <label for="display_name">Nom</label>
+                        <input type="text" id="display_name" name="display_name" value="{{ current_user.display_name }}">
                     </div>
-
-                    <div class="user-meta">
-                        {% set months = {
-                            'January': 'Janvier', 'February': 'Février', 'March': 'Mars', 
-                            'April': 'Avril', 'May': 'Mai', 'June': 'Juin', 
-                            'July': 'Juillet', 'August': 'Août', 'September': 'Septembre', 
-                            'October': 'Octobre', 'November': 'Novembre', 'December': 'Décembre'
-                        } %}
-                    
-                        <span>
-                            <i class="fa-regular fa-calendar-days"></i> 
-                            A rejoint en {{ months[current_user.created_at.strftime('%B')] }} {{ current_user.created_at.strftime('%Y') }}
-                        </span>
+                
+                    <div class="input-group">
+                        <label for="bio">Bio</label>
+                        <textarea id="bio" name="bio" rows="4">{{ current_user.bio if current_user.bio else '' }}</textarea>
                     </div>
-    
-                    <div class="user-stats">
-                        <p><strong>4</strong> Following</p>
-                        <p><strong>0</strong> Followers</p>
+                
+                    <div class="input-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" value="{{ current_user.email if current_user.email else '' }}" placeholder="Ajouter votre email">
                     </div>
-                    
                 </div>
             </div>
         </div>
-    </div>
+    </form>
+</div>
 
     <nav class="sidebar-right-sommaire">
         <div class="sommaire-right-section">
