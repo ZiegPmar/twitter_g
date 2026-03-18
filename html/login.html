@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="fr">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="../css/login.css">
+<head>
+<title>G connexion</title>
+</head>
+
+<body>
+    <a>
+        <img src="{{ url_for('static', filename='img/logo.webp') }}" alt="Logo" class="logo"/>
+    </a>
+    <div class="login_page">
+        <div class="username">
+            <h1>Identifiant :</h1>
+            <form>
+                <input type="text" placeholder="Entrez votre nom d'utilisateur">
+            </form>
+        </div>
+        <div class="password">
+            <h1>Mot de passe :</h1>
+            <form>
+                <input type="password" placeholder="Entrez votre mot de passe">
+            </form>
+        </div>
+        <button>Se connecter</button>
+    </div>
+    <div class="create_account">
+        <a href="inscription.html" class="clickable-text">Créer un compte</a>
+    </div>
+
+
+</body>
