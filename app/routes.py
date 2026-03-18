@@ -273,4 +273,79 @@ def login():
 
 @bp.route("/monprofil")
 def monprofil():
-    return render_template("profil.html")
+    db = get_db()
+    current_user_id = 1 # À remplacer plus tard par session.get('user_id')
+
+    with db.cursor() as cursor:
+        # 1. On récupère TOUTES les infos de l'utilisateur (dont banner_url et avatar_url via le SELECT *)
+        cursor.execute("""
+            SELECT *
+            FROM users
+            WHERE id = %s
+        """, (current_user_id,))
+        current_user = cursor.fetchone()
+
+        # 2. On récupère les posts (Ajout de banner_url et filtrage par user_id)
+        cursor.execute("""
+            SELECT
+                posts.id,
+                posts.user_id, 
+                posts.content,
+                posts.media_url,
+                posts.created_at,
+                users.username,
+                users.display_name,
+                users.avatar_url,
+                users.banner_url,  -- Ajouté pour être sûr de l'avoir
+                COUNT(DISTINCT likes.id) AS like_count,
+                COUNT(DISTINCT replies.id) AS comment_count,
+                EXISTS (
+                    SELECT 1
+                    FROM likes AS my_like
+                    WHERE my_like.post_id = posts.id
+                      AND my_like.user_id = %s
+                ) AS liked_by_me
+            FROM posts
+            JOIN users ON users.id = posts.user_id
+            LEFT JOIN likes ON likes.post_id = posts.id
+            LEFT JOIN posts AS replies ON replies.reply_to_post_id = posts.id
+            WHERE posts.reply_to_post_id IS NULL 
+              AND posts.user_id = %s -- IMPORTANT : On ne veut que TES posts sur ton profil
+            GROUP BY 
+                posts.id, posts.user_id, posts.content, posts.media_url, posts.created_at,
+                users.username, users.display_name, users.avatar_url, users.banner_url
+            ORDER BY posts.created_at DESC
+        """, (current_user_id, current_user_id))
+        raw_posts = cursor.fetchall()
+
+        posts = []
+
+        for row in raw_posts:
+            post = dict(row)
+
+            # 3. On récupère les aperçus de commentaires pour chaque post
+            cursor.execute("""
+                SELECT
+                    posts.id,
+                    posts.content,
+                    posts.created_at,
+                    users.username,
+                    users.display_name,
+                    users.avatar_url
+                FROM posts
+                JOIN users ON users.id = posts.user_id
+                WHERE posts.reply_to_post_id = %s
+                ORDER BY posts.created_at DESC
+                LIMIT 3
+            """, (post["id"],))
+            comments_preview = cursor.fetchall()
+
+            post["comments_preview"] = [dict(comment) for comment in comments_preview]
+            posts.append(post)
+
+    return render_template("profil.html", posts=posts, current_user=current_user)
+
+
+@bp.route("/test")
+def test():
+    return "ok"
