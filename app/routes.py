@@ -93,8 +93,6 @@ def add_post():
             VALUES (%s, %s, %s)
         """, (user_id, content, media_url if media_url else None))
     
-    # db.commit() n'est pas nécessaire si tu as mis autocommit=True dans db.py
-    # mais on le laisse par sécurité si ce n'est pas le cas.
     db.commit() 
 
     return redirect(url_for("main.feed"))
@@ -221,8 +219,6 @@ def delete_post(post_id):
         if post["user_id"] != current_user_id:
             return redirect(url_for("main.feed"))
 
-        # Grâce au 'ON DELETE CASCADE' dans ton schéma, supprimer le post 
-        # va automatiquement supprimer ses likes et ses commentaires dans MySQL !
         cursor.execute("""
             DELETE FROM posts
             WHERE id = %s
@@ -274,10 +270,9 @@ def login():
 @bp.route("/monprofil")
 def monprofil():
     db = get_db()
-    current_user_id = 1 # À remplacer plus tard par session.get('user_id')
+    current_user_id = 1 # À remplacer plus tard 
 
     with db.cursor() as cursor:
-        # 1. On récupère TOUTES les infos de l'utilisateur (dont banner_url et avatar_url via le SELECT *)
         cursor.execute("""
             SELECT *
             FROM users
@@ -285,7 +280,6 @@ def monprofil():
         """, (current_user_id,))
         current_user = cursor.fetchone()
 
-        # 2. On récupère les posts (Ajout de banner_url et filtrage par user_id)
         cursor.execute("""
             SELECT
                 posts.id,
@@ -323,7 +317,6 @@ def monprofil():
         for row in raw_posts:
             post = dict(row)
 
-            # 3. On récupère les aperçus de commentaires pour chaque post
             cursor.execute("""
                 SELECT
                     posts.id,

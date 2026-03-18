@@ -4,8 +4,7 @@ body {
     font-family: Arial, sans-serif;
 }
 
-
-/* --- Layout principal --- */
+/* -------- Layout principal -------- */
 .layout {
     margin-left: 0px;
     min-height: 100vh;
@@ -16,19 +15,22 @@ body {
     transition: transform 0.2s ease;
 }
 
-/* Feed */
+/* --------------- Feed  ---------------- */
 .feed {
     width: 100%;
     max-width: 950px;
+    display: flex;
+    flex-direction: column; 
 }
 
 .feed-container {
     display: flex;
     flex-direction: column;   
     gap: 12px;
+    order: 2; 
 }
 
-/* Post */
+/* ------------------ Post --------------- */
 .post {
     display: flex;
     gap: 15px;
@@ -155,26 +157,65 @@ body {
     color: #A7A7A5;
 }
 
+/* ------------ Actions du post ------------------*/
+
 .post-actions {
     display: flex;
-    gap: 10px;
+    gap: 15px; 
     margin-top: 15px;
 }
 
-.post-actions button {
+.action-btn {
+    display: flex;
+    align-items: center;
     background: none;
     border: none;
-    color: #ccc;
+    color: #8b98a5; 
     cursor: pointer;
+    padding: 6px 12px; 
+    border-radius: 999px; 
+    gap: 8px;
+    font-family: inherit;
+    transition: background-color 0.2s ease, color 0.2s ease; 
+    box-sizing: border-box;
+}
+.action-btn .icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px; 
+    height: 20px;
 }
 
-.post-actions button:hover i {
-    color: #9EC2AC;
+.action-btn i {
+    font-size: 18px;
+    width: 18px;
+    text-align: center;
 }
 
-/*--------------------------------- 
-            Commentaires 
-----------------------------------*/
+.action-btn .count {
+    font-size: 14px;
+    font-weight: 500;
+    min-width: 16px; 
+    text-align: left;
+}
+
+.action-btn:hover {
+    background-color: rgba(29, 155, 240, 0.1); 
+    color: #1d9bf0;
+}
+
+.action-btn.liked {
+    color: #f91880; 
+}
+
+form[action*="unlike"] .action-btn:hover,
+form[action*="like"] .action-btn:hover {
+    background-color: rgba(249, 24, 128, 0.1);
+    color: #f91880;
+}
+
+/*-------------------- Commentaires ------------------*/
 
 .post-comments-preview {
     margin-top: 14px;
@@ -278,18 +319,19 @@ body {
     opacity: 0.9;
 }
 
-/* Poster */
+/*-------------- Poster ---------------------*/
 
 .create-post-form {
     width: 100%;
-    max-width: 350px;
+    max-width: 100%; 
     max-height: 220px;
-    margin-bottom: 18px;
+    margin-bottom: 24px; 
     padding: 18px;
     background: #141313;
     border: 1px solid #333;
     border-radius: 16px;
     box-sizing: border-box;
+    order: -1; 
 }
 
 .create-post-form textarea {
@@ -462,21 +504,21 @@ body {
     gap: 10px;
 }
 
-/* Refresh */
+/*------------------- Refresh -----------------------*/
 
 .pull-refresh-bottom {
     position: fixed;
     bottom: 0;
-    left: 240px;
-    width: calc(100% - 240px);
+    left: 0;
+    width: 100%; 
     height: 0;
     overflow: hidden;
     display: flex;
-    justify-content: center;
+    justify-content: center; 
     align-items: flex-start;
-    background: #1a2e24; /* fond vert foncé distinct */
+    background: #1e1c1c; 
     border-top: 1px solid #9EC2AC;
-    z-index: 100;
+    z-index: 10; 
     pointer-events: none;
     transition: height 0.2s ease;
 }
