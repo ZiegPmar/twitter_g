@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="../css/profil.css">
-    <link rel="stylesheet" href="../css/sidebar-left.css">
-    <link rel="stylesheet" href="../css/sidebar-right.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/profil.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar-left.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar-right.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">a
     <title>Document</title>
 </head>
 <body>
     <nav class="sidebar-sommaire">
         <a href="home.html" class="logo">
-            <img src="../img/logo.webp" alt="Logo"/>
+            <img src="{{ url_for('static', filename='img/logo.webp') }}" alt="Logo"/>
         </a>
 
         <div class="sommaire-section">
@@ -26,7 +26,7 @@
         </div>
 
         <div class="profil-section">
-            <img src="../img/Avatar/47fef09b5e072de28b79f35d0ef4e9cc.webp" alt="pdp" />
+            <img src="{{ url_for('static', filename='img/Avatar/47fef09b5e072de28b79f35d0ef4e9cc.webp') }}" alt="pdp" />
             <a class="text-sidebar" href="profil.html">Evian Devigne </a>
         </div>
     </nav>
@@ -61,7 +61,7 @@
         </div>
     </nav>
 
-    <script src="../javascript/meteo.js"></script>
+    <script src="{{ url_for('static', filename='javascript/meteo.js') }}"></script>
 </body>
 </html>
 
