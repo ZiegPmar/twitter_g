@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="fr">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="../css/inscription.css">
+<head>
+<title>G inscription</title>
+</head>
+
+<body>
+    <a>
+        <img src="{{ url_for('static', filename='img/logo.webp') }}" alt="Logo" class="logo"/>
+    </a>
+    <div class="create_account">
+        <div class="username">
+            <h1>Identifiant :</h1>
+            <form>
+                <input type="text" placeholder="Choissiez votre nom d'utilisateur">
+            </form>
+        </div>
+        <div class="password">
+            <h1>Mot de passe :</h1>
+            <form>
+                <input type="password" placeholder="Choissisez votre mot de passe">
+            </form>
+        </div>
+        <div class="confirm_password">
+            <h1>Confirmer le mot de passe :</h1>
+            <form>
+                <input type="password" placeholder="Confirmez votre mot de passe">
+            </form>
+        </div>
+        <button>S'inscrire</button>
+    </div>
+    <div class="login_page">
+        <a href="login.html" class="clickable-text">Connection</a>
+    </div>
+</body>
