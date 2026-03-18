@@ -58,14 +58,33 @@
                 <div class="user-details">
                     <h1 class="user-name" href="{{ url_for('main.profile', username=current_user['username']) }}">{{ current_user['display_name'] }}</h1>
                     
+                    <div class="user-bio">
+                        {% if current_user.bio %}
+                            <p>{{ current_user.bio }}</p>
+                        {% else %}
+                            <p style="color: #444; font-style: italic;">Pas encore de bio...</p>
+                        {% endif %}
+                    </div>
+
                     <div class="user-meta">
-                        <span><i class="fa-regular fa-calendar-days"></i> Joined November 2025</span>
+                        {% set months = {
+                            'January': 'Janvier', 'February': 'Février', 'March': 'Mars', 
+                            'April': 'Avril', 'May': 'Mai', 'June': 'Juin', 
+                            'July': 'Juillet', 'August': 'Août', 'September': 'Septembre', 
+                            'October': 'Octobre', 'November': 'Novembre', 'December': 'Décembre'
+                        } %}
+                    
+                        <span>
+                            <i class="fa-regular fa-calendar-days"></i> 
+                            A rejoint en {{ months[current_user.created_at.strftime('%B')] }} {{ current_user.created_at.strftime('%Y') }}
+                        </span>
                     </div>
     
                     <div class="user-stats">
                         <p><strong>4</strong> Following</p>
                         <p><strong>0</strong> Followers</p>
                     </div>
+                    
                 </div>
             </div>
         </div>
