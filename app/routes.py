@@ -120,7 +120,8 @@ def like_post(post_id):
             """, (user_id, post_id))
             db.commit()
 
-    return redirect(url_for("main.feed"))
+    # Redirige là d'où vient l'utilisateur (feed, profil ou view_post)
+    return redirect(request.referrer or url_for("main.feed"))
 
 @bp.route("/unlike/<int:post_id>", methods=["POST"])
 def unlike_post(post_id):
@@ -134,7 +135,8 @@ def unlike_post(post_id):
         """, (user_id, post_id))
         db.commit()
 
-    return redirect(url_for("main.feed"))
+    # Redirige là d'où vient l'utilisateur
+    return redirect(request.referrer or url_for("main.feed"))
 
 #----------------------------------
 # Système de commentaires basique
@@ -148,7 +150,7 @@ def add_comment(post_id):
     content = request.form.get("content", "").strip()
 
     if not content:
-        return redirect(url_for("main.feed"))
+        return redirect(request.referrer or url_for("main.feed"))
 
     with db.cursor() as cursor:
         cursor.execute("""
@@ -157,28 +159,57 @@ def add_comment(post_id):
         """, (user_id, content, None, post_id))
         db.commit()
 
-    return redirect(url_for("main.feed"))
+    # Redirige là d'où vient l'utilisateur (feed ou view_post)
+    return redirect(request.referrer or url_for("main.feed"))
+
+#----------------------------------
+# Afficher un post en grand
+#----------------------------------
 
 @bp.route("/post/<int:post_id>")
 def view_post(post_id):
     db = get_db()
+    current_user_id = 1  # temporaire
 
     with db.cursor() as cursor:
+        # 1. On récupère les infos de l'utilisateur connecté (pour la sidebar)
+        cursor.execute("SELECT * FROM users WHERE id = %s", (current_user_id,))
+        current_user = cursor.fetchone()
+
+        # 2. On récupère le post visé, AVEC le compte de likes et commentaires
         cursor.execute("""
             SELECT
                 posts.id,
+                posts.user_id,
                 posts.content,
                 posts.media_url,
                 posts.created_at,
                 users.username,
                 users.display_name,
-                users.avatar_url
+                users.avatar_url,
+                COUNT(DISTINCT likes.id) AS like_count,
+                COUNT(DISTINCT replies.id) AS comment_count,
+                EXISTS (
+                    SELECT 1
+                    FROM likes AS my_like
+                    WHERE my_like.post_id = posts.id
+                      AND my_like.user_id = %s
+                ) AS liked_by_me
             FROM posts
             JOIN users ON users.id = posts.user_id
+            LEFT JOIN likes ON likes.post_id = posts.id
+            LEFT JOIN posts AS replies ON replies.reply_to_post_id = posts.id
             WHERE posts.id = %s
-        """, (post_id,))
+            GROUP BY 
+                posts.id, posts.user_id, posts.content, posts.media_url, posts.created_at,
+                users.username, users.display_name, users.avatar_url
+        """, (current_user_id, post_id))
         post = cursor.fetchone()
 
+        if not post:
+            return redirect(url_for("main.feed")) # Si le post n'existe pas, retour à l'accueil
+
+        # 3. On récupère TOUS les commentaires de ce post
         cursor.execute("""
             SELECT
                 posts.id,
@@ -194,7 +225,7 @@ def view_post(post_id):
         """, (post_id,))
         comments = cursor.fetchall()
 
-    return render_template("post.html", post=post, comments=comments)
+    return render_template("view_post.html", post=post, comments=comments, current_user=current_user)
 
 #----------------
 # Delete un post
@@ -234,6 +265,7 @@ def delete_post(post_id):
 @bp.route("/profile/<username>")
 def profile(username):
     db = get_db()
+    current_user_id = 1
 
     with db.cursor() as cursor:
         cursor.execute("""
