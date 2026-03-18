@@ -73,7 +73,7 @@ def feed():
     return render_template("home.html", posts=posts, current_user=current_user)
 
 #-------------------------------------------------------------
-# Ajout d'un post avec image uploadee
+# Ajout d'un post 
 #-------------------------------------------------------------
 
 @bp.route("/add-post", methods=["POST"])
@@ -84,47 +84,35 @@ def add_post():
     content = request.form.get("content", "").strip()
     media_file = request.files.get("media")
 
-    # S'il n'y a ni texte ni image, on annule et on renvoie d'où le gars vient
     if not content and not media_file:
         return redirect(request.referrer or url_for("main.feed"))
 
     with db.cursor() as cursor:
-        # 1. On récupère ton username pour nommer l'image
         cursor.execute("SELECT username FROM users WHERE id = %s", (user_id,))
         user = cursor.fetchone()
         username = user["username"] if user else "user"
 
-        # 2. On insère d'abord le post SANS l'image pour que MySQL lui donne un ID
         cursor.execute("""
             INSERT INTO posts (user_id, content, media_url)
             VALUES (%s, %s, NULL)
         """, (user_id, content))
         
-        # On chope l'ID que MySQL vient tout juste de créer !
         post_id = cursor.lastrowid
 
-        # 3. Si tu as mis une image, on la gère
         if media_file and media_file.filename != "":
-            # On récupère l'extension (.jpg, .png, etc.)
             ext = media_file.filename.rsplit('.', 1)[-1].lower()
             
-            # FORMAT DE NOMMAGE : evian_42_image.jpg
             new_filename = f"{username}_{post_id}_image.{ext}"
-            
-            # Le BON chemin demandé : app/static/img/post
+
             upload_folder = os.path.join("app", "static", "img", "post")
-            
-            # On s'assure que le dossier "post" existe bien, sinon on le crée
+
             os.makedirs(upload_folder, exist_ok=True) 
             
-            # On sauvegarde la vraie image dans le dossier
             filepath = os.path.join(upload_folder, new_filename)
             media_file.save(filepath)
             
-            # On prépare le lien pour la Base de Données (Flask a juste besoin de 'img/post/...')
             media_url = url_for('static', filename=f'img/post/{new_filename}')
 
-            # On met à jour le post qu'on vient de créer pour lui ajouter son image
             cursor.execute("""
                 UPDATE posts 
                 SET media_url = %s 
