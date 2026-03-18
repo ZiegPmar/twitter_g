@@ -397,6 +397,69 @@ def monprofil():
 
     return render_template("profil.html", posts=posts, current_user=current_user)
 
+@bp.route("/update-profile", methods=["POST"])
+def update_profile():
+    db = get_db()
+    current_user_id = 1
+    
+    with db.cursor() as cursor:
+        cursor.execute("SELECT username, avatar_url, banner_url FROM users WHERE id = %s", (current_user_id,))
+        user = cursor.fetchone()
+    
+    username = user['username'].replace(" ", "_") # On remplace les espaces par des underscores
+    
+    # --- CHEMINS ABSOLUS ---
+    # current_app.root_path pointe vers le dossier racine de ton application
+    avatar_dir = os.path.join(current_app.root_path, 'static', 'img', 'Avatar')
+    banner_dir = os.path.join(current_app.root_path, 'static', 'img', 'banniere')
+
+    # Création automatique des dossiers s'ils n'existent pas
+    os.makedirs(avatar_dir, exist_ok=True)
+    os.makedirs(banner_dir, exist_ok=True)
+
+    # --- GESTION AVATAR ---
+    avatar_file = request.files.get("avatar")
+    new_avatar_name = user['avatar_url']
+    if avatar_file and avatar_file.filename != '':
+        ext = os.path.splitext(avatar_file.filename)[1]
+        new_avatar_name = f"{username}_avatar{ext}"
+        avatar_file.save(os.path.join(avatar_dir, new_avatar_name))
+
+    # --- GESTION BANNIÈRE ---
+    banner_file = request.files.get("banner")
+    new_banner_name = user['banner_url']
+    if banner_file and banner_file.filename != '':
+        ext = os.path.splitext(banner_file.filename)[1]
+        new_banner_name = f"{username}_banniere{ext}"
+        banner_file.save(os.path.join(banner_dir, new_banner_name))
+
+    # --- MISE À JOUR BDD ---
+    with db.cursor() as cursor:
+        cursor.execute("""
+            UPDATE users 
+            SET display_name = %s, bio = %s, email = %s, avatar_url = %s, banner_url = %s 
+            WHERE id = %s
+        """, (request.form.get("display_name"), 
+              request.form.get("bio"), 
+              request.form.get("email"), 
+              new_avatar_name, 
+              new_banner_name, 
+              current_user_id))
+        db.commit()
+        
+    return redirect(url_for('main.monprofil'))
+
+@bp.route("/edit-profile")
+def edit_profile():
+    db = get_db()
+    current_user_id = 1 # Temporaire, comme le reste de ton code
+
+    with db.cursor() as cursor:
+        cursor.execute("SELECT * FROM users WHERE id = %s", (current_user_id,))
+        current_user = cursor.fetchone()
+
+    return render_template("edit_profil.html", current_user=current_user)
+
 @bp.route("/test")
 def test():
     return "ok"
