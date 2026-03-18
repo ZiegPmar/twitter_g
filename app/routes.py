@@ -274,3 +274,7 @@ def login():
 @bp.route("/monprofil")
 def monprofil():
     return render_template("profil.html")
+
+@bp.route("/inscription")
+def inscription():
+    return render_template("inscription.html")
