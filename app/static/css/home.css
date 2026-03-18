@@ -69,6 +69,19 @@ body {
     align-items: center;
 }
 
+.post-header a {
+    text-decoration: none;  
+    color: inherit;         
+}
+
+.post-header a:visited {
+    color: inherit;          
+}
+
+.post-header a:hover .post-name {
+    text-decoration: underline;
+}
+
 .post-header-left {
     display: flex;
     gap: 10px;

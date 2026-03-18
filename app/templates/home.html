@@ -7,20 +7,16 @@
 
     <link
       rel="stylesheet"
-      href="{{ url_for('static', filename='css/home.css') }}"
-    />
+      href="{{ url_for('static', filename='css/home.css') }}" />
     <link
       rel="stylesheet"
-      href="{{ url_for('static', filename='css/sidebar-left.css') }}"
-    />
+      href="{{ url_for('static', filename='css/sidebar-left.css') }}" />
     <link
       rel="stylesheet"
-      href="{{ url_for('static', filename='css/sidebar-right.css') }}"
-    />
+      href="{{ url_for('static', filename='css/sidebar-right.css') }}" />
     <link
       rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   </head>
 
   <body>
@@ -35,34 +31,36 @@
             Sidebar 
 --------------------------->
     <nav class="sidebar-sommaire">
-      <a href="" class="logo">
+      <a href class="logo">
         <img
           src="{{ url_for('static', filename='img/logo.webp') }}"
-          alt="Logo"
-        />
+          alt="Logo" />
       </a>
 
       <div class="sommaire-section">
-        <a class="text-sidebar" href=""
-          ><i class="fa-solid fa-house"></i> Home</a
-        >
-        <a class="text-sidebar" href="#"
-          ><i class="fa-solid fa-user-group"></i> Amis</a
-        >
-        <a class="text-sidebar" href="#"
-          ><i class="fa-solid fa-envelope"></i> Message</a
-        >
-        <a class="text-sidebar" href="#"
-          ><i class="fa-solid fa-heart"></i> Like</a
-        >
+        <a class="text-sidebar" href><i class="fa-solid fa-house"></i> Home</a>
+        <a class="text-sidebar" href="#"><i class="fa-solid fa-user-group"></i>
+          Amis</a>
+        <a class="text-sidebar" href="#"><i class="fa-solid fa-envelope"></i>
+          Message</a>
+        <a class="text-sidebar" href="#"><i class="fa-solid fa-heart"></i>
+          Like</a>
       </div>
 
       <div class="profil-section">
-        <img
-          src="{{ url_for('static', filename='img/Avatar/47fef09b5e072de28b79f35d0ef4e9cc.webp') }}"
-          alt="pdp"
-        />
-        <a class="text-sidebar" href="">Evian Devigne</a>
+
+        <a
+          href="{{ url_for('main.profile', username=current_user['username']) }}">
+          <img
+            src="{{ current_user['avatar_url'] or url_for('static', filename='img/Avatar/47fef09b5e072de28b79f35d0ef4e9cc.webp') }}"
+            alt="pdp" />
+        </a>
+
+        <a class="text-sidebar"
+          href="{{ url_for('main.profile', username=current_user['username']) }}">
+          {{ current_user['display_name'] }}
+        </a>
+
       </div>
     </nav>
 
@@ -70,13 +68,11 @@
       <form
         class="create-post-form"
         action="{{ url_for('main.add_post') }}"
-        method="POST"
-      >
+        method="POST">
         <textarea
           name="content"
           placeholder="Quoi de neuf ?"
-          required
-        ></textarea>
+          required></textarea>
 
         <input type="hidden" name="media_url" id="mediaUrlInput" />
 
@@ -92,9 +88,8 @@
         <div
           class="media-preview-box"
           id="mediaPreviewBox"
-          style="display: none"
-        >
-          <img id="mediaPreviewImg" src="" alt="Aperçu média" />
+          style="display: none">
+          <img id="mediaPreviewImg" src alt="Aperçu média" />
           <button type="button" class="remove-media-btn" id="removeMediaBtn">
             Retirer
           </button>
@@ -107,14 +102,16 @@
             <div class="post-avatar">
               <img
                 src="{% if post['avatar_url'] %}{{ post['avatar_url'] }}{% else %}{{ url_for('static', filename='img/Avatar/47fef09b5e072de28b79f35d0ef4e9cc.webp') }}{% endif %}"
-                alt="Avatar {{ post['display_name'] }}"
-              />
+                alt="Avatar {{ post['display_name'] }}" />
             </div>
 
             <div class="post-body">
               <header class="post-header">
                 <div class="post-header-left">
-                  <span class="post-name">{{ post['display_name'] }}</span>
+                  <a
+                    href="{{ url_for('main.profile', username=post['username']) }}">
+                    <span class="post-name">{{ post['display_name'] }}</span>
+                  </a>
                   <span class="post-username">@{{ post['username'] }}</span>
                   <span class="post-time">• {{ post['created_at'] }}</span>
                 </div>
@@ -123,8 +120,7 @@
                   <button
                     class="post-menu-btn"
                     data-id="{{ post['id'] }}"
-                    onclick="toggleMenu(this)"
-                  >
+                    onclick="toggleMenu(this)">
                     <i class="fa-solid fa-ellipsis"></i>
                   </button>
 
@@ -133,8 +129,7 @@
                     <form
                       action="{{ url_for('main.delete_post', post_id=post['id']) }}"
                       method="POST"
-                      onsubmit="return confirm('Supprimer ce post ?');"
-                    >
+                      onsubmit="return confirm('Supprimer ce post ?');">
                       <button type="submit" class="menu-item delete">
                         <i class="fa-regular fa-trash-can"></i> Supprimer
                       </button>
@@ -161,8 +156,7 @@
                 <form
                   action="{{ url_for('main.unlike_post', post_id=post['id']) }}"
                   method="POST"
-                  style="display: inline"
-                >
+                  style="display: inline">
                   <button type="submit">
                     <i class="fa-solid fa-heart"></i> {{ post['like_count'] }}
                   </button>
@@ -171,8 +165,7 @@
                 <form
                   action="{{ url_for('main.like_post', post_id=post['id']) }}"
                   method="POST"
-                  style="display: inline"
-                >
+                  style="display: inline">
                   <button type="submit">
                     <i class="fa-regular fa-heart"></i> {{ post['like_count'] }}
                   </button>
@@ -194,21 +187,17 @@
                   <div class="comment-preview-avatar">
                     <img
                       src="{% if comment['avatar_url'] %}{{ comment['avatar_url'] }}{% else %}{{ url_for('static', filename='img/Avatar/47fef09b5e072de28b79f35d0ef4e9cc.webp') }}{% endif %}"
-                      alt="Avatar {{ comment['display_name'] }}"
-                    />
+                      alt="Avatar {{ comment['display_name'] }}" />
                   </div>
 
                   <div class="comment-preview-body">
                     <div class="comment-preview-header">
-                      <span class="comment-preview-name"
-                        >{{ comment['display_name'] }}</span
-                      >
-                      <span class="comment-preview-username"
-                        >@{{ comment['username'] }}</span
-                      >
-                      <span class="comment-preview-time"
-                        >• {{ comment['created_at'] }}</span
-                      >
+                      <span class="comment-preview-name">{{
+                        comment['display_name'] }}</span>
+                      <span class="comment-preview-username">@{{
+                        comment['username'] }}</span>
+                      <span class="comment-preview-time">• {{
+                        comment['created_at'] }}</span>
                     </div>
 
                     <p class="comment-preview-text">{{ comment['content'] }}</p>
@@ -217,8 +206,7 @@
                 {% endfor %} {% if post['comment_count'] > 3 %}
                 <a
                   href="{{ url_for('main.view_post', post_id=post['id']) }}"
-                  class="view-more-comments"
-                >
+                  class="view-more-comments">
                   Voir les {{ post['comment_count'] }} commentaires
                 </a>
                 {% endif %}
@@ -228,13 +216,11 @@
               <form
                 action="{{ url_for('main.add_comment', post_id=post['id']) }}"
                 method="POST"
-                class="comment-form"
-              >
+                class="comment-form">
                 <input
                   type="text"
                   name="content"
-                  placeholder="Répondre à ce post..."
-                />
+                  placeholder="Répondre à ce post..." />
                 <button type="submit">Commenter</button>
               </form>
             </div>
@@ -273,8 +259,20 @@
       </div>
     </nav>
 
-    <script src="{{ url_for('static', filename='javascript/refresh.js') }}"></script>
-    <script src="{{ url_for('static', filename='javascript/meteo.js') }}"></script>
+    <!------ Script pour le refresh de la page ----->
+    <script
+      src="{{ url_for('static', filename='javascript/refresh.js') }}"></script>
+
+    <!------ Script pour gérer l'API météo ----->
+    <script
+      src="{{ url_for('static', filename='javascript/meteo.js') }}"></script>
+    <!------ Script pour gérer l'ajout de média dans les posts ----->
+    <script
+      src="{{ url_for('static', filename='javascript/ajout_media.js') }}"></script>
+
+    <!---- Script pour gérer le menu pour supprimer et partager post ---->
+    <script
+      src="{{ url_for('static', filename='javascript/menu_contextuel.js') }}"></script>
 
     <div class="media-modal-overlay" id="mediaModal" style="display: none">
       <div class="media-modal">
@@ -290,8 +288,7 @@
           <input
             type="text"
             id="mediaUrlField"
-            placeholder="https://exemple.com/image.jpg"
-          />
+            placeholder="https://exemple.com/image.jpg" />
 
           <div class="media-modal-actions">
             <button type="button" class="secondary-btn" id="cancelMediaModal">
@@ -305,87 +302,5 @@
       </div>
     </div>
 
-    <!------------------------------------------------------
-    Script pour gérer l'ajout de média dans les posts
-------------------------------------------------------->
-
-    <script>
-      const mediaModal = document.getElementById("mediaModal");
-      const openMediaModal = document.getElementById("openMediaModal");
-      const closeMediaModal = document.getElementById("closeMediaModal");
-      const cancelMediaModal = document.getElementById("cancelMediaModal");
-      const saveMediaModal = document.getElementById("saveMediaModal");
-
-      const mediaUrlField = document.getElementById("mediaUrlField");
-      const mediaUrlInput = document.getElementById("mediaUrlInput");
-
-      const mediaPreviewBox = document.getElementById("mediaPreviewBox");
-      const mediaPreviewImg = document.getElementById("mediaPreviewImg");
-      const removeMediaBtn = document.getElementById("removeMediaBtn");
-
-      function openModal() {
-        mediaModal.style.display = "flex";
-        mediaUrlField.value = mediaUrlInput.value;
-        mediaUrlField.focus();
-      }
-
-      function closeModal() {
-        mediaModal.style.display = "none";
-      }
-
-      function updatePreview() {
-        const url = mediaUrlInput.value.trim();
-
-        if (!url) {
-          mediaPreviewBox.style.display = "none";
-          mediaPreviewImg.src = "";
-          return;
-        }
-
-        mediaPreviewImg.src = url;
-        mediaPreviewBox.style.display = "block";
-      }
-
-      openMediaModal.addEventListener("click", openModal);
-      closeMediaModal.addEventListener("click", closeModal);
-      cancelMediaModal.addEventListener("click", closeModal);
-
-      saveMediaModal.addEventListener("click", () => {
-        mediaUrlInput.value = mediaUrlField.value.trim();
-        updatePreview();
-        closeModal();
-      });
-
-      removeMediaBtn.addEventListener("click", () => {
-        mediaUrlInput.value = "";
-        mediaUrlField.value = "";
-        updatePreview();
-      });
-
-      mediaModal.addEventListener("click", (e) => {
-        if (e.target === mediaModal) {
-          closeModal();
-        }
-      });
-
-      updatePreview();
-    </script>
-
-    <!------------------------------------------------------------
-    Script pour gérer le menu pour supprimer et partager post 
-------------------------------------------------------------->
-
-    <script>
-      function toggleMenu(el) {
-        const postId = el.dataset.id;
-        const menu = document.getElementById("menu-" + postId);
-
-        document.querySelectorAll(".post-menu").forEach((m) => {
-          if (m !== menu) m.classList.remove("active");
-        });
-
-        menu.classList.toggle("active");
-      }
-    </script>
   </body>
 </html>

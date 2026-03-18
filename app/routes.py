@@ -8,58 +8,68 @@ def feed():
     db = get_db()
     current_user_id = 1
 
-    raw_posts = db.execute("""
-        SELECT
-            posts.id,
-            posts.user_id, 
-            posts.content,
-            posts.media_url,
-            posts.created_at,
-            users.username,
-            users.display_name,
-            users.avatar_url,
-            COUNT(DISTINCT likes.id) AS like_count,
-            COUNT(DISTINCT replies.id) AS comment_count,
-            EXISTS (
-                SELECT 1
-                FROM likes AS my_like
-                WHERE my_like.post_id = posts.id
-                  AND my_like.user_id = ?
-            ) AS liked_by_me
-        FROM posts
-        JOIN users ON users.id = posts.user_id
-        LEFT JOIN likes ON likes.post_id = posts.id
-        LEFT JOIN posts AS replies ON replies.reply_to_post_id = posts.id
-        WHERE posts.reply_to_post_id IS NULL
-        GROUP BY posts.id, posts.user_id, posts.content, posts.media_url, posts.created_at,
-                 users.username, users.display_name, users.avatar_url
-        ORDER BY posts.created_at DESC
-    """, (current_user_id,)).fetchall()
+    with db.cursor() as cursor:
+        cursor.execute("""
+            SELECT *
+            FROM users
+            WHERE id = %s
+        """, (current_user_id,))
+        current_user = cursor.fetchone()
 
-    posts = []
-
-    for row in raw_posts:
-        post = dict(row)
-
-        comments_preview = db.execute("""
+        cursor.execute("""
             SELECT
                 posts.id,
+                posts.user_id, 
                 posts.content,
+                posts.media_url,
                 posts.created_at,
                 users.username,
                 users.display_name,
-                users.avatar_url
+                users.avatar_url,
+                COUNT(DISTINCT likes.id) AS like_count,
+                COUNT(DISTINCT replies.id) AS comment_count,
+                EXISTS (
+                    SELECT 1
+                    FROM likes AS my_like
+                    WHERE my_like.post_id = posts.id
+                      AND my_like.user_id = %s
+                ) AS liked_by_me
             FROM posts
             JOIN users ON users.id = posts.user_id
-            WHERE posts.reply_to_post_id = ?
+            LEFT JOIN likes ON likes.post_id = posts.id
+            LEFT JOIN posts AS replies ON replies.reply_to_post_id = posts.id
+            WHERE posts.reply_to_post_id IS NULL
+            GROUP BY posts.id, posts.user_id, posts.content, posts.media_url, posts.created_at,
+                     users.username, users.display_name, users.avatar_url
             ORDER BY posts.created_at DESC
-            LIMIT 3
-        """, (post["id"],)).fetchall()
+        """, (current_user_id,))
+        raw_posts = cursor.fetchall()
 
-        post["comments_preview"] = [dict(comment) for comment in comments_preview]
-        posts.append(post)
+        posts = []
 
-    return render_template("home.html", posts=posts)
+        for row in raw_posts:
+            post = dict(row)
+
+            cursor.execute("""
+                SELECT
+                    posts.id,
+                    posts.content,
+                    posts.created_at,
+                    users.username,
+                    users.display_name,
+                    users.avatar_url
+                FROM posts
+                JOIN users ON users.id = posts.user_id
+                WHERE posts.reply_to_post_id = %s
+                ORDER BY posts.created_at DESC
+                LIMIT 3
+            """, (post["id"],))
+            comments_preview = cursor.fetchall()
+
+            post["comments_preview"] = [dict(comment) for comment in comments_preview]
+            posts.append(post)
+
+    return render_template("home.html", posts=posts, current_user=current_user)
 
 #-------------------------------------------------------------
 # Ajout d'un post ( temporaire dans l'état )
@@ -77,12 +87,15 @@ def add_post():
 
     user_id = 1
 
-    db.execute("""
-        INSERT INTO posts (user_id, content, media_url)
-        VALUES (?, ?, ?)
-    """, (user_id, content, media_url if media_url else None))
-
-    db.commit()
+    with db.cursor() as cursor:
+        cursor.execute("""
+            INSERT INTO posts (user_id, content, media_url)
+            VALUES (%s, %s, %s)
+        """, (user_id, content, media_url if media_url else None))
+    
+    # db.commit() n'est pas nécessaire si tu as mis autocommit=True dans db.py
+    # mais on le laisse par sécurité si ce n'est pas le cas.
+    db.commit() 
 
     return redirect(url_for("main.feed"))
 
@@ -95,17 +108,19 @@ def like_post(post_id):
     db = get_db()
     user_id = 1 # A supprimer quand login sera ok
 
-    existing_like = db.execute("""
-        SELECT id FROM likes
-        WHERE user_id = ? AND post_id = ?
-    """, (user_id, post_id)).fetchone()
-
-    if existing_like is None:
-        db.execute("""
-            INSERT INTO likes (user_id, post_id)
-            VALUES (?, ?)
+    with db.cursor() as cursor:
+        cursor.execute("""
+            SELECT id FROM likes
+            WHERE user_id = %s AND post_id = %s
         """, (user_id, post_id))
-        db.commit()
+        existing_like = cursor.fetchone()
+
+        if existing_like is None:
+            cursor.execute("""
+                INSERT INTO likes (user_id, post_id)
+                VALUES (%s, %s)
+            """, (user_id, post_id))
+            db.commit()
 
     return redirect(url_for("main.feed"))
 
@@ -114,11 +129,12 @@ def unlike_post(post_id):
     db = get_db()
     user_id = 1  # temporaire
 
-    db.execute("""
-        DELETE FROM likes
-        WHERE user_id = ? AND post_id = ?
-    """, (user_id, post_id))
-    db.commit()
+    with db.cursor() as cursor:
+        cursor.execute("""
+            DELETE FROM likes
+            WHERE user_id = %s AND post_id = %s
+        """, (user_id, post_id))
+        db.commit()
 
     return redirect(url_for("main.feed"))
 
@@ -136,12 +152,12 @@ def add_comment(post_id):
     if not content:
         return redirect(url_for("main.feed"))
 
-    db.execute("""
-        INSERT INTO posts (user_id, content, media_url, reply_to_post_id)
-        VALUES (?, ?, ?, ?)
-    """, (user_id, content, None, post_id))
-
-    db.commit()
+    with db.cursor() as cursor:
+        cursor.execute("""
+            INSERT INTO posts (user_id, content, media_url, reply_to_post_id)
+            VALUES (%s, %s, %s, %s)
+        """, (user_id, content, None, post_id))
+        db.commit()
 
     return redirect(url_for("main.feed"))
 
@@ -149,33 +165,36 @@ def add_comment(post_id):
 def view_post(post_id):
     db = get_db()
 
-    post = db.execute("""
-        SELECT
-            posts.id,
-            posts.content,
-            posts.media_url,
-            posts.created_at,
-            users.username,
-            users.display_name,
-            users.avatar_url
-        FROM posts
-        JOIN users ON users.id = posts.user_id
-        WHERE posts.id = ?
-    """, (post_id,)).fetchone()
+    with db.cursor() as cursor:
+        cursor.execute("""
+            SELECT
+                posts.id,
+                posts.content,
+                posts.media_url,
+                posts.created_at,
+                users.username,
+                users.display_name,
+                users.avatar_url
+            FROM posts
+            JOIN users ON users.id = posts.user_id
+            WHERE posts.id = %s
+        """, (post_id,))
+        post = cursor.fetchone()
 
-    comments = db.execute("""
-        SELECT
-            posts.id,
-            posts.content,
-            posts.created_at,
-            users.username,
-            users.display_name,
-            users.avatar_url
-        FROM posts
-        JOIN users ON users.id = posts.user_id
-        WHERE posts.reply_to_post_id = ?
-        ORDER BY posts.created_at ASC
-    """, (post_id,)).fetchall()
+        cursor.execute("""
+            SELECT
+                posts.id,
+                posts.content,
+                posts.created_at,
+                users.username,
+                users.display_name,
+                users.avatar_url
+            FROM posts
+            JOIN users ON users.id = posts.user_id
+            WHERE posts.reply_to_post_id = %s
+            ORDER BY posts.created_at ASC
+        """, (post_id,))
+        comments = cursor.fetchall()
 
     return render_template("post.html", post=post, comments=comments)
 
@@ -188,33 +207,70 @@ def delete_post(post_id):
     db = get_db()
     current_user_id = 1  # temporaire
 
-    post = db.execute("""
-        SELECT id, user_id
-        FROM posts
-        WHERE id = ?
-    """, (post_id,)).fetchone()
+    with db.cursor() as cursor:
+        cursor.execute("""
+            SELECT id, user_id
+            FROM posts
+            WHERE id = %s
+        """, (post_id,))
+        post = cursor.fetchone()
 
-    if post is None:
-        return redirect(url_for("main.feed"))
+        if post is None:
+            return redirect(url_for("main.feed"))
 
-    if post["user_id"] != current_user_id:
-        return redirect(url_for("main.feed"))
+        if post["user_id"] != current_user_id:
+            return redirect(url_for("main.feed"))
 
-    db.execute("""
-        DELETE FROM likes
-        WHERE post_id = ?
-    """, (post_id,))
-
-    db.execute("""
-        DELETE FROM posts
-        WHERE reply_to_post_id = ?
-    """, (post_id,))
-
-    db.execute("""
-        DELETE FROM posts
-        WHERE id = ?
-    """, (post_id,))
-
-    db.commit()
+        # Grâce au 'ON DELETE CASCADE' dans ton schéma, supprimer le post 
+        # va automatiquement supprimer ses likes et ses commentaires dans MySQL !
+        cursor.execute("""
+            DELETE FROM posts
+            WHERE id = %s
+        """, (post_id,))
+        db.commit()
 
     return redirect(url_for("main.feed"))
+
+#------------------------------
+# Redirige vers les profiles
+#------------------------------
+
+@bp.route("/profile/<username>")
+def profile(username):
+    db = get_db()
+
+    with db.cursor() as cursor:
+        cursor.execute("""
+            SELECT *
+            FROM users
+            WHERE username = %s
+        """, (username,))
+        user = cursor.fetchone()
+
+        if user is None:
+            return "Utilisateur introuvable", 404
+
+        cursor.execute("""
+            SELECT
+                posts.id,
+                posts.content,
+                posts.media_url,
+                posts.created_at
+            FROM posts
+            WHERE user_id = %s
+              AND reply_to_post_id IS NULL
+            ORDER BY created_at DESC
+        """, (user["id"],))
+        posts = cursor.fetchall()
+
+    return render_template("profil.html", user=user, posts=posts)
+
+
+@bp.route("/login")
+def login():
+    return render_template("login.html")
+
+
+@bp.route("/monprofil")
+def monprofil():
+    return render_template("profil.html")
