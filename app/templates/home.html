@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>G</title>
 
-    <link rel="icon" href="{{ url_for('static', filename='img/logo.webp') }}" type="image/png"/>
+    <link rel="icon" href="{{ url_for('static', filename='img/logo.webp') }}"
+      type="image/png" />
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='css/home.css') }}" />
@@ -29,70 +30,44 @@
     </div>
 
     <nav class="sidebar-sommaire">
-      <a href class="logo">
-        <img
-          src="{{ url_for('static', filename='img/logo.webp') }}"
+      <a href="/" class="logo">
+        <img src="{{ url_for('static', filename='img/logo.webp') }}"
           alt="Logo" />
       </a>
 
       <div class="sommaire-section">
-        <a class="text-sidebar" href><i class="fa-solid fa-house"></i> Home</a>
+        <a class="text-sidebar" href="/"><i class="fa-solid fa-house"></i>
+          Home</a>
         <a class="text-sidebar" href="#"><i class="fa-solid fa-user-group"></i>
           Amis</a>
         <a class="text-sidebar" href="#"><i class="fa-solid fa-envelope"></i>
           Message</a>
         <a class="text-sidebar" href="#"><i class="fa-solid fa-heart"></i>
           Like</a>
+
+        <button class="sidebar-publish-btn"
+          id="openPublishModalBtn">Publier</button>
       </div>
 
-      <div class="profil-section">
-        <a
-          href="{{ url_for('main.profile', username=current_user['username']) }}">
-          <img
-            src="{{ url_for('static', filename='img/Avatar/' + current_user['avatar_url']) if current_user['avatar_url'] else url_for('static', filename='img/Avatar/47fef09b5e072de28b79f35d0ef4e9cc.webp') }}"
-            alt="Avatar" />
-        </a>
+      <a href="{{ url_for('main.profile', username=current_user['username']) }}" class="profil-section profil-link">
+        
+        <div class="profil-avatar-link">
+          <img src="{{ url_for('static', filename='img/Avatar/' ~ current_user['avatar_url']) if current_user['avatar_url'] and current_user['avatar_url'] != 'None' else url_for('static', filename='img/Avatar/47fef09b5e072de28b79f35d0ef4e9cc.webp') }}" alt="Avatar" />
+        </div>
 
-        <a class="text-sidebar"
-          href="{{ url_for('main.profile', username=current_user['username']) }}">
-          {{ current_user['display_name'] }}
-        </a>
-      </div>
+        <div class="profil-info">
+          <span class="profil-display-name">{{ current_user['display_name'] }}</span>
+          <span class="profil-username">@{{ current_user['username'] }}</span>
+        </div>
+
+        <button type="button" class="logout-btn" title="Se déconnecter" onclick="event.preventDefault(); window.location.href='/logout';">
+          <i class="fa-solid fa-arrow-right-from-bracket"></i>
+        </button>
+      </a>
     </nav>
 
     <main class="layout">
       <section class="feed">
-        
-        <form
-          class="create-post-form"
-          action="{{ url_for('main.add_post') }}"
-          method="POST">
-          <textarea
-            name="content"
-            placeholder="Quoi de neuf ?"
-            required></textarea>
-
-          <input type="hidden" name="media_url" id="mediaUrlInput" />
-
-          <div class="create-post-toolbar">
-            <button type="button" class="media-trigger-btn" id="openMediaModal">
-              <i class="fa-regular fa-image"></i>
-              Ajouter un média
-            </button>
-
-            <button type="submit" class="publish-btn">Publier</button>
-          </div>
-
-          <div
-            class="media-preview-box"
-            id="mediaPreviewBox"
-            style="display: none">
-            <img id="mediaPreviewImg" src alt="Aperçu média" />
-            <button type="button" class="remove-media-btn" id="removeMediaBtn">
-              Retirer
-            </button>
-          </div>
-        </form>
 
         <div class="feed-container">
           {% for post in posts %}
@@ -156,7 +131,8 @@
                   method="POST"
                   style="margin: 0; padding: 0; display: flex;">
                   <button type="submit" class="action-btn liked">
-                    <div class="icon-wrapper"><i class="fa-solid fa-heart"></i></div>
+                    <div class="icon-wrapper"><i
+                        class="fa-solid fa-heart"></i></div>
                     <span class="count">{{ post['like_count'] }}</span>
                   </button>
                 </form>
@@ -166,15 +142,18 @@
                   method="POST"
                   style="margin: 0; padding: 0; display: flex;">
                   <button type="submit" class="action-btn">
-                    <div class="icon-wrapper"><i class="fa-regular fa-heart"></i></div>
+                    <div class="icon-wrapper"><i
+                        class="fa-regular fa-heart"></i></div>
                     <span class="count">{{ post['like_count'] }}</span>
                   </button>
                 </form>
                 {% endif %}
 
-                <a href="{{ url_for('main.view_post', post_id=post['id']) }}" style="text-decoration: none;">
+                <a href="{{ url_for('main.view_post', post_id=post['id']) }}"
+                  style="text-decoration: none;">
                   <button type="button" class="action-btn">
-                    <div class="icon-wrapper"><i class="fa-regular fa-comment"></i></div>
+                    <div class="icon-wrapper"><i
+                        class="fa-regular fa-comment"></i></div>
                     <span class="count">{{ post['comment_count'] }}</span>
                   </button>
                 </a>
@@ -259,6 +238,49 @@
       </div>
     </nav>
 
+    <div class="publish-modal-overlay" id="publishModalOverlay">
+      <div class="publish-modal">
+        <div class="publish-modal-header">
+          <button type="button" class="close-publish-btn" id="closePublishModalBtn">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <div class="publish-modal-body">
+          <form action="{{ url_for('main.add_post') }}" method="POST" enctype="multipart/form-data">
+            <textarea name="content" id="modalTextarea" placeholder="Quoi de neuf ?" required></textarea>
+            
+            <input type="file" name="media" id="modalMediaInput" accept="image/*" style="display: none;" />
+
+            <div class="modal-img-preview-container" id="modalImgPreviewContainer" style="display: none;">
+              <img src="" id="modalImgPreview" alt="Aperçu" />
+              <button type="button" class="modal-remove-img-btn" id="modalRemoveImgBtn">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+
+            <div class="publish-modal-footer">
+              <div class="publish-modal-tools">
+                <button type="button" class="tool-btn" id="modalAddMediaBtn" title="Média">
+                  <i class="fa-regular fa-image"></i>
+                </button>
+                <button type="button" class="tool-btn" id="modalEmojiBtn" title="Emoji">
+                  <i class="fa-regular fa-face-smile"></i>
+                </button>
+              </div>
+              
+              <div id="emojiPickerContainer" class="emoji-picker-container"></div>
+              
+              <button type="submit" class="publish-submit-btn">Publier</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <script
+      src="{{ url_for('static', filename='javascript/menu_publier.js') }}"></script>
+
     <script
       src="{{ url_for('static', filename='javascript/refresh.js') }}"></script>
 
@@ -270,33 +292,9 @@
     <script
       src="{{ url_for('static', filename='javascript/menu_contextuel.js') }}"></script>
 
-    <div class="media-modal-overlay" id="mediaModal" style="display: none">
-      <div class="media-modal">
-        <div class="media-modal-header">
-          <h3>Ajouter un média</h3>
-          <button type="button" class="close-media-modal" id="closeMediaModal">
-            <i class="fa-solid fa-xmark"></i>
-          </button>
-        </div>
-
-        <div class="media-modal-body">
-          <label for="mediaUrlField">URL de l’image</label>
-          <input
-            type="text"
-            id="mediaUrlField"
-            placeholder="https://exemple.com/image.jpg" />
-
-          <div class="media-modal-actions">
-            <button type="button" class="secondary-btn" id="cancelMediaModal">
-              Annuler
-            </button>
-            <button type="button" class="primary-btn" id="saveMediaModal">
-              Valider
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@emoji-mart/data"></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/emoji-mart@latest/dist/browser.js"></script>
 
   </body>
 </html>

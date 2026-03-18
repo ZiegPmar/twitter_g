@@ -1,3 +1,4 @@
+import os
 from flask import Blueprint, render_template, request, redirect, url_for
 from .db import get_db
 
@@ -72,33 +73,70 @@ def feed():
     return render_template("home.html", posts=posts, current_user=current_user)
 
 #-------------------------------------------------------------
-# Ajout d'un post ( temporaire dans l'état )
+# Ajout d'un post avec image uploadee
 #-------------------------------------------------------------
 
 @bp.route("/add-post", methods=["POST"])
 def add_post():
     db = get_db()
+    user_id = 1 # Temporaire
 
     content = request.form.get("content", "").strip()
-    media_url = request.form.get("media_url", "").strip()
+    media_file = request.files.get("media")
 
-    if not content:
-        return redirect(url_for("main.feed"))
-
-    user_id = 1
+    # S'il n'y a ni texte ni image, on annule et on renvoie d'où le gars vient
+    if not content and not media_file:
+        return redirect(request.referrer or url_for("main.feed"))
 
     with db.cursor() as cursor:
+        # 1. On récupère ton username pour nommer l'image
+        cursor.execute("SELECT username FROM users WHERE id = %s", (user_id,))
+        user = cursor.fetchone()
+        username = user["username"] if user else "user"
+
+        # 2. On insère d'abord le post SANS l'image pour que MySQL lui donne un ID
         cursor.execute("""
             INSERT INTO posts (user_id, content, media_url)
-            VALUES (%s, %s, %s)
-        """, (user_id, content, media_url if media_url else None))
-    
+            VALUES (%s, %s, NULL)
+        """, (user_id, content))
+        
+        # On chope l'ID que MySQL vient tout juste de créer !
+        post_id = cursor.lastrowid
+
+        # 3. Si tu as mis une image, on la gère
+        if media_file and media_file.filename != "":
+            # On récupère l'extension (.jpg, .png, etc.)
+            ext = media_file.filename.rsplit('.', 1)[-1].lower()
+            
+            # FORMAT DE NOMMAGE : evian_42_image.jpg
+            new_filename = f"{username}_{post_id}_image.{ext}"
+            
+            # Le BON chemin demandé : app/static/img/post
+            upload_folder = os.path.join("app", "static", "img", "post")
+            
+            # On s'assure que le dossier "post" existe bien, sinon on le crée
+            os.makedirs(upload_folder, exist_ok=True) 
+            
+            # On sauvegarde la vraie image dans le dossier
+            filepath = os.path.join(upload_folder, new_filename)
+            media_file.save(filepath)
+            
+            # On prépare le lien pour la Base de Données (Flask a juste besoin de 'img/post/...')
+            media_url = url_for('static', filename=f'img/post/{new_filename}')
+
+            # On met à jour le post qu'on vient de créer pour lui ajouter son image
+            cursor.execute("""
+                UPDATE posts 
+                SET media_url = %s 
+                WHERE id = %s
+            """, (media_url, post_id))
+
     db.commit() 
 
-    return redirect(url_for("main.feed"))
+    return redirect(request.referrer or url_for("main.feed"))
 
 #-------------------------------------------------------------
-# Système de like/unlike basique, à améliorer avec le login
+# Système de like/unlike basique
 #-------------------------------------------------------------
 
 @bp.route("/like/<int:post_id>", methods=["POST"])
@@ -120,7 +158,6 @@ def like_post(post_id):
             """, (user_id, post_id))
             db.commit()
 
-    # Redirige là d'où vient l'utilisateur (feed, profil ou view_post)
     return redirect(request.referrer or url_for("main.feed"))
 
 @bp.route("/unlike/<int:post_id>", methods=["POST"])
@@ -135,7 +172,6 @@ def unlike_post(post_id):
         """, (user_id, post_id))
         db.commit()
 
-    # Redirige là d'où vient l'utilisateur
     return redirect(request.referrer or url_for("main.feed"))
 
 #----------------------------------
@@ -159,7 +195,6 @@ def add_comment(post_id):
         """, (user_id, content, None, post_id))
         db.commit()
 
-    # Redirige là d'où vient l'utilisateur (feed ou view_post)
     return redirect(request.referrer or url_for("main.feed"))
 
 #----------------------------------
@@ -172,11 +207,9 @@ def view_post(post_id):
     current_user_id = 1  # temporaire
 
     with db.cursor() as cursor:
-        # 1. On récupère les infos de l'utilisateur connecté (pour la sidebar)
         cursor.execute("SELECT * FROM users WHERE id = %s", (current_user_id,))
         current_user = cursor.fetchone()
 
-        # 2. On récupère le post visé, AVEC le compte de likes et commentaires
         cursor.execute("""
             SELECT
                 posts.id,
@@ -207,9 +240,8 @@ def view_post(post_id):
         post = cursor.fetchone()
 
         if not post:
-            return redirect(url_for("main.feed")) # Si le post n'existe pas, retour à l'accueil
+            return redirect(url_for("main.feed"))
 
-        # 3. On récupère TOUS les commentaires de ce post
         cursor.execute("""
             SELECT
                 posts.id,
@@ -265,7 +297,6 @@ def delete_post(post_id):
 @bp.route("/profile/<username>")
 def profile(username):
     db = get_db()
-    current_user_id = 1
 
     with db.cursor() as cursor:
         cursor.execute("""
@@ -293,16 +324,24 @@ def profile(username):
 
     return render_template("profil.html", user=user, posts=posts)
 
+#------------------------------
+# Login / Logout
+#------------------------------
 
 @bp.route("/login")
 def login():
     return render_template("login.html")
 
 
+@bp.route("/logout")
+def logout():
+    return render_template("login.html")
+
+
 @bp.route("/monprofil")
 def monprofil():
     db = get_db()
-    current_user_id = 1 # À remplacer plus tard 
+    current_user_id = 1
 
     with db.cursor() as cursor:
         cursor.execute("""
@@ -322,7 +361,7 @@ def monprofil():
                 users.username,
                 users.display_name,
                 users.avatar_url,
-                users.banner_url,  -- Ajouté pour être sûr de l'avoir
+                users.banner_url,
                 COUNT(DISTINCT likes.id) AS like_count,
                 COUNT(DISTINCT replies.id) AS comment_count,
                 EXISTS (
@@ -336,7 +375,7 @@ def monprofil():
             LEFT JOIN likes ON likes.post_id = posts.id
             LEFT JOIN posts AS replies ON replies.reply_to_post_id = posts.id
             WHERE posts.reply_to_post_id IS NULL 
-              AND posts.user_id = %s -- IMPORTANT : On ne veut que TES posts sur ton profil
+              AND posts.user_id = %s
             GROUP BY 
                 posts.id, posts.user_id, posts.content, posts.media_url, posts.created_at,
                 users.username, users.display_name, users.avatar_url, users.banner_url
@@ -369,7 +408,6 @@ def monprofil():
             posts.append(post)
 
     return render_template("profil.html", posts=posts, current_user=current_user)
-
 
 @bp.route("/test")
 def test():
