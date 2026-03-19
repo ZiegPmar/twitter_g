@@ -1,5 +1,5 @@
 import os
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, render_template, request, redirect, url_for, current_app
 from .db import get_db
 
 bp = Blueprint("main", __name__)
@@ -325,6 +325,10 @@ def login():
 def logout():
     return render_template("login.html")
 
+
+#------------------------------
+# profil 
+#------------------------------
 
 @bp.route("/monprofil")
 def monprofil():

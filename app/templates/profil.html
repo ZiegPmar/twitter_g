@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar-left.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar-right.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">a
-    <title>Document</title>
+    <title>Profil</title>
 </head>
 <body>
     <nav class="sidebar-sommaire">
@@ -26,7 +26,7 @@
         </div>
 
         <div class="profil-section">
-            <img src="{{ url_for('static', filename='img/Avatar/47fef09b5e072de28b79f35d0ef4e9cc.webp') }}" alt="pdp" />
+            <img src="{{ url_for('static', filename='img/Avatar/' + current_user.avatar_url) if current_user.avatar_url else url_for('static', filename='img/Avatar/default_avatar.png') }}" alt="pdp" />
             <a class="text-sidebar" href="{{ url_for('main.profile', username=current_user['username']) }}">{{ current_user['display_name'] }} </a>
         </div>
     </nav>
