@@ -1,115 +1,35 @@
-.main {
-    margin-left: 240px; 
-    padding: 20px;
-    color: white; 
-}
-
+/* --- Structure Générale --- */
 body {
     background-color: #121212; 
     margin: 0;
-    font-family: Arial, sans-serif;
-}
-
-/* --- Méteo --- */
-
-.weather-card {
-    background: linear-gradient(135deg, #008bba, #007298);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     color: white;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    padding: 25px;
-    border-radius: 20px;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-    transition: transform 0.3s ease;
 }
 
-.weather-card:hover {
-    transform: translateY(-5px);
-}
-
-.weather-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-.city { 
-    font-weight: bold; 
-    font-size: 1.2rem; 
-    text-transform: uppercase; 
-    letter-spacing: 1px; 
-}
-
-.date { 
-    font-size: 0.8rem; 
-    opacity: 0.8; 
-}
-
-.weather-main {
+.main {
+    margin-left: 240px; /* Aligné avec ta sidebar gauche */
+    margin-right: 350px; /* Espace pour la sidebar droite */
+    padding: 0; /* On enlève le padding pour que la bannière colle aux bords */
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
 }
 
-.temp-container { 
-    font-size: 2.5rem; 
-    font-weight: 800; 
-}
-
-.unit { 
-    font-size: 1.5rem; 
-    vertical-align: top; 
-    margin-top: 10px; 
-    display: inline-block; 
-}
-
-.weather-icon { 
-    font-size: 3rem; 
-    text-align: center;
-    display: block;
-}
-
-.weather-details {
-    border-top: 1px solid rgba(255,255,255,0.2);
-    padding-top: 15px;
-    display: flex;
-    justify-content: center;
-}
-
-.detail-item { 
-    text-align: center; 
-}
-
-.label { 
-    display: block; 
-    font-size: 0.7rem; 
-    opacity: 0.7; 
-    margin-bottom: 5px; 
-}
-
-#vent-affichage { 
-    font-weight: 600; 
-    font-size: 1rem; 
-}
-
-
-/* Container principal du profil */
+/* --- Container du Profil --- */
 .profile-container {
     width: 100%;
-    border-radius: 2%;
-    max-width: 900px; /* Largeur typique d'un feed */
-    border: 1px solid #333;
+    max-width: 600px; /* Largeur standard d'un flux */
     background-color: #141313;
+    border-left: 1px solid #333;
+    border-right: 1px solid #333;
 }
 
-/* Bannière */
+/* --- Bannière --- */
 .banner {
     width: 100%;
-    border-radius: 2%;
     height: 200px;
     overflow: hidden;
+    background-color: #333;
 }
 
 .banner img {
@@ -118,35 +38,34 @@ body {
     object-fit: cover;
 }
 
-/* Section sous la bannière */
+/* --- Section Infos Utilisateur --- */
 .profile-info-section {
-    padding: 0 15px 15px 15px;
+    padding: 15px;
     position: relative;
+    border-bottom: 1px solid #333;
 }
 
-/* Header avec l'avatar qui chevauche */
 .profile-header {
     display: flex;
-    justify-content: flex-end; /* Aligne le bouton Edit à droite */
-    align-items: flex-start;
-    height: 70px; /* Espace pour laisser l'avatar remonter */
+    justify-content: flex-end; /* Bouton edit à droite */
+    height: 70px;
 }
 
 .avatar-container {
     position: absolute;
-    top: -75px; /* Remonte l'image sur la bannière */
+    top: -75px; /* Chevauche la bannière */
     left: 15px;
 }
 
 .profile-pdp {
-    width: 140px;
-    height: 140px;
+    width: 134px;
+    height: 134px;
     border-radius: 50%;
-    border: 4px solid #141313; /* Le contour noir qui sépare de la bannière */
+    border: 4px solid #141313;
     object-fit: cover;
+    background-color: #141313;
 }
 
-/* Bouton Edit */
 .edit-btn {
     background: transparent;
     border: 1px solid #555;
@@ -154,34 +73,48 @@ body {
     padding: 8px 16px;
     border-radius: 20px;
     font-weight: bold;
-    margin-top: 12px;
+    font-size: 14px;
     cursor: pointer;
+    transition: 0.2s;
+    height: fit-content;
+    margin-top: 10px;
 }
 
 .edit-btn:hover {
     background-color: rgba(255, 255, 255, 0.1);
 }
 
-/* Texte utilisateur */
 .user-details {
     margin-top: 10px;
 }
 
 .user-name {
     font-size: 20px;
-    font-weight: 80px;
+    font-weight: 800;
     margin: 0;
 }
 
 .user-handle {
     color: #71767b;
-    margin: 2px 0 12px 0;
+    margin: 0;
+    font-size: 15px;
+}
+
+.user-bio {
+    margin: 12px 0;
+    font-size: 15px;
+    line-height: 1.4;
+    word-wrap: break-word;
 }
 
 .user-meta {
     color: #71767b;
     font-size: 14px;
-    padding-top: 12px;
+    margin-bottom: 12px;
+}
+
+.user-meta i {
+    margin-right: 4px;
 }
 
 .user-stats {
@@ -192,21 +125,142 @@ body {
 .user-stats p {
     color: #71767b;
     font-size: 14px;
+    margin: 0;
 }
 
 .user-stats strong {
     color: white;
 }
 
-.user-bio {
-    margin-top: 12px;
-    margin-bottom: 12px;
-    color: white;
-    font-size: 15px;
-    line-height: 1.4; /* Pour que ce soit plus lisible si c'est sur plusieurs lignes */
-    word-wrap: break-word; /* Évite que les longs mots ne cassent le design */
+/* --- Section Flux de Posts --- */
+.feed-container {
+    width: 100%;
+    max-width: 600px;
+    border-left: 1px solid #333;
+    border-right: 1px solid #333;
 }
 
-.user-bio p {
-    margin: 0;
+.post {
+    display: flex;
+    padding-top: 15px;
+    padding-bottom: 15px;
+    padding-right: 25px;
+    padding-left: 25px;
+    border-bottom: 1px solid #333;
+    transition: background-color 0.2s;
+    cursor: pointer;
+}
+
+.post:hover {
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.post-avatar {
+    margin-right: 12px;
+}
+
+.post-avatar img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.post-body {
+    flex: 1;
+}
+
+.post-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.post-header-left {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.post-name {
+    font-weight: bold;
+    color: white;
+    text-decoration: none;
+}
+
+.post-name:hover {
+    text-decoration: underline;
+}
+
+.post-username, .post-time {
+    color: #71767b;
+    font-size: 14px;
+}
+
+.post-text {
+    font-size: 15px;
+    line-height: 1.4;
+    margin: 0 0 10px 0;
+    white-space: pre-wrap; /* Garde les retours à la ligne */
+}
+
+.post-img img {
+    width: 100%;
+    max-height: 500px;
+    border-radius: 16px;
+    border: 1px solid #333;
+    object-fit: cover;
+    margin-top: 10px;
+}
+
+.post-actions {
+    display: flex;
+    justify-content: b;
+    max-width: 400px;
+    margin-top: 12px;
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #71767b;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    transition: 0.2s;
+    padding: 0;
+    margin-right: 30px;
+}
+
+.action-btn:hover {
+    color: #1d9bf0;
+}
+
+.action-btn i {
+    padding: 8px;
+    border-radius: 50%;
+}
+
+.action-btn:hover i {
+    background-color: rgba(29, 155, 240, 0.1);
+}
+
+/* --- Sidebar Météo (Copie de ton code existant) --- */
+.sidebar-right-sommaire {
+    position: fixed;
+    right: 20px;
+    top: 20px;
+    width: 300px;
+}
+
+.weather-card {
+    background: linear-gradient(135deg, #008bba, #007298);
+    color: white;
+    padding: 20px;
+    border-radius: 20px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
 }
