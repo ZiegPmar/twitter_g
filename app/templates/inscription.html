@@ -1,38 +1,55 @@
 <!DOCTYPE html>
 <html lang="fr">
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="../static/css/inscription.css">
 <head>
-<title>G inscription</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/inscription.css') }}">
+    <title>G inscription</title>
 </head>
 
 <body>
     <a>
         <img src="{{ url_for('static', filename='img/logo.webp') }}" alt="Logo" class="logo"/>
     </a>
+
     <div class="create_account">
-        <div class="username">
-            <h1>Identifiant :</h1>
-            <form>
-                <input type="text" placeholder="Choissiez votre nom d'utilisateur">
-            </form>
-        </div>
-        <div class="password">
-            <h1>Mot de passe :</h1>
-            <form>
-                <input type="password" placeholder="Choissisez votre mot de passe">
-            </form>
-        </div>
-        <div class="confirm_password">
-            <h1>Confirmer le mot de passe :</h1>
-            <form>
-                <input type="password" placeholder="Confirmez votre mot de passe">
-            </form>
-        </div>
-        <button>S'inscrire</button>
+        <form method="POST" action="{{ url_for('main.inscription') }}">
+
+            <div class="username">
+                <h1>Identifiant :</h1>
+                <input type="text" name="username" placeholder="Choisissez votre nom d'utilisateur" required>
+            </div>
+
+            <div class="display_name">
+                <h1>Nom d'affichage :</h1>
+                <input type="text" name="display_name" placeholder="Choisissez votre nom d'affichage" required>
+            </div>
+
+            <div class="email">
+                 <h1>Email :</h1>
+                 <input type="email" name="email" placeholder="Entrez votre adresse email" required>
+            </div>
+
+            <div class="password">
+                <h1>Mot de passe :</h1>
+                <input type="password" name="password" placeholder="Choisissez votre mot de passe" required>
+            </div>
+
+            <div class="confirm_password">
+                <h1>Confirmer le mot de passe :</h1>
+                <input type="password" name="confirm_password" placeholder="Confirmez votre mot de passe" required>
+            </div>
+
+            {% if error %}
+                <p class="error-msg">{{ error }}</p>
+            {% endif %}
+
+            <button type="submit">S'inscrire</button>
+        </form>
     </div>
+
     <div class="login_page">
-        <a href="login.html" class="clickable-text">Connection</a>
+        <a href="{{ url_for('main.connexion') }}" class="clickable-text">Connexion</a>
     </div>
 </body>
+</html>
