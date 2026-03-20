@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, render_template, request, redirect, url_for, session
 from .db import get_db
 
 bp = Blueprint("main", __name__)
@@ -72,7 +72,7 @@ def feed():
     return render_template("home.html", posts=posts, current_user=current_user)
 
 #-------------------------------------------------------------
-# Ajout d'un post ( temporaire dans l'état )
+# Ajout d'un post
 #-------------------------------------------------------------
 
 @bp.route("/add-post", methods=["POST"])
@@ -93,20 +93,18 @@ def add_post():
             VALUES (%s, %s, %s)
         """, (user_id, content, media_url if media_url else None))
     
-    # db.commit() n'est pas nécessaire si tu as mis autocommit=True dans db.py
-    # mais on le laisse par sécurité si ce n'est pas le cas.
     db.commit() 
 
     return redirect(url_for("main.feed"))
 
 #-------------------------------------------------------------
-# Système de like/unlike basique, à améliorer avec le login
+# Like / Unlike
 #-------------------------------------------------------------
 
 @bp.route("/like/<int:post_id>", methods=["POST"])
 def like_post(post_id):
     db = get_db()
-    user_id = 1 # A supprimer quand login sera ok
+    user_id = 1
 
     with db.cursor() as cursor:
         cursor.execute("""
@@ -127,7 +125,7 @@ def like_post(post_id):
 @bp.route("/unlike/<int:post_id>", methods=["POST"])
 def unlike_post(post_id):
     db = get_db()
-    user_id = 1  # temporaire
+    user_id = 1
 
     with db.cursor() as cursor:
         cursor.execute("""
@@ -138,14 +136,14 @@ def unlike_post(post_id):
 
     return redirect(url_for("main.feed"))
 
-#----------------------------------
-# Système de commentaires basique
-#----------------------------------
+#-------------------------------------------------------------
+# Commentaires
+#-------------------------------------------------------------
 
 @bp.route("/comment/<int:post_id>", methods=["POST"])
 def add_comment(post_id):
     db = get_db()
-    user_id = 1  # temporaire
+    user_id = 1
 
     content = request.form.get("content", "").strip()
 
@@ -198,14 +196,14 @@ def view_post(post_id):
 
     return render_template("post.html", post=post, comments=comments)
 
-#----------------
-# Delete un post
-#----------------
+#-------------------------------------------------------------
+# Suppression d'un post
+#-------------------------------------------------------------
 
 @bp.route("/delete-post/<int:post_id>", methods=["POST"])
 def delete_post(post_id):
     db = get_db()
-    current_user_id = 1  # temporaire
+    current_user_id = 1
 
     with db.cursor() as cursor:
         cursor.execute("""
@@ -221,8 +219,6 @@ def delete_post(post_id):
         if post["user_id"] != current_user_id:
             return redirect(url_for("main.feed"))
 
-        # Grâce au 'ON DELETE CASCADE' dans ton schéma, supprimer le post 
-        # va automatiquement supprimer ses likes et ses commentaires dans MySQL !
         cursor.execute("""
             DELETE FROM posts
             WHERE id = %s
@@ -231,9 +227,9 @@ def delete_post(post_id):
 
     return redirect(url_for("main.feed"))
 
-#------------------------------
-# Redirige vers les profiles
-#------------------------------
+#-------------------------------------------------------------
+# Profils
+#-------------------------------------------------------------
 
 @bp.route("/profile/<username>")
 def profile(username):
@@ -265,16 +261,81 @@ def profile(username):
 
     return render_template("profil.html", user=user, posts=posts)
 
+@bp.route("/monprofil")
+def monprofil():
+    if 'user_id' not in session:
+        return redirect(url_for("main.connexion"))
+    return render_template("profil.html")
+
+#-------------------------------------------------------------
+# Login → redirige vers connexion
+#-------------------------------------------------------------
 
 @bp.route("/login")
 def login():
-    return render_template("login.html")
+    return redirect(url_for('main.connexion'))
 
+#-------------------------------------------------------------
+# Connexion
+#-------------------------------------------------------------
 
-@bp.route("/monprofil")
-def monprofil():
-    return render_template("profil.html")
+@bp.route('/connexion', methods=['GET', 'POST'])
+def connexion():
+    error = None
 
-@bp.route("/inscription")
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '').strip()
+
+        db = get_db()
+        with db.cursor() as cursor:
+            cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+            user = cursor.fetchone()
+
+        if user is None:
+            error = "Identifiant introuvable."
+        elif user['password_hash'] != password:
+            error = "Mot de passe incorrect."
+        else:
+            session['user_id'] = user['id']
+            session['username'] = user['username']
+            return redirect(url_for('main.feed'))
+
+    return render_template('login.html', error=error)
+
+#-------------------------------------------------------------
+# Inscription
+#-------------------------------------------------------------
+
+@bp.route('/inscription', methods=['GET', 'POST'])
 def inscription():
-    return render_template("inscription.html")
+    error = None
+
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        display_name = request.form.get('display_name', '').strip()
+        email = request.form.get('email', '').strip()
+        password = request.form.get('password', '').strip()
+        confirm_password = request.form.get('confirm_password', '').strip()
+
+        if not username or not display_name or not email or not password or not confirm_password:
+            error = "Tous les champs sont obligatoires."
+        elif password != confirm_password:
+            error = "Les mots de passe ne correspondent pas."
+        else:
+            db = get_db()
+            with db.cursor() as cursor:
+                cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+                existing_user = cursor.fetchone()
+
+                if existing_user:
+                    error = "Cet identifiant est déjà pris."
+                else:
+                    cursor.execute(
+                        "INSERT INTO users (username, display_name, email, password_hash) VALUES (%s, %s, %s, %s)",
+                        (username, display_name, email, password)
+                    )
+                    db.commit()
+                    return redirect(url_for('main.connexion'))
+
+    return render_template('inscription.html', error=error)
