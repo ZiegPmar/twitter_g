@@ -1,12 +1,16 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session
+import os
+from flask import Blueprint, render_template, request, redirect, url_for, current_app, session
 from .db import get_db
 
 bp = Blueprint("main", __name__)
 
 @bp.route("/")
 def feed():
+    if 'user_id' not in session:
+        return redirect(url_for("main.connexion"))
+        
     db = get_db()
-    current_user_id = 1
+    current_user_id = session['user_id']
 
     with db.cursor() as cursor:
         cursor.execute("""
@@ -72,39 +76,64 @@ def feed():
     return render_template("home.html", posts=posts, current_user=current_user)
 
 #-------------------------------------------------------------
-# Ajout d'un post
+# Ajout d'un post 
 #-------------------------------------------------------------
 
 @bp.route("/add-post", methods=["POST"])
 def add_post():
+    if 'user_id' not in session:
+        return redirect(url_for("main.connexion"))
+        
     db = get_db()
+    user_id = session['user_id']
+    username = session['username']
 
     content = request.form.get("content", "").strip()
-    media_url = request.form.get("media_url", "").strip()
+    media_file = request.files.get("media")
 
-    if not content:
-        return redirect(url_for("main.feed"))
-
-    user_id = 1
+    if not content and not media_file:
+        return redirect(request.referrer or url_for("main.feed"))
 
     with db.cursor() as cursor:
         cursor.execute("""
             INSERT INTO posts (user_id, content, media_url)
-            VALUES (%s, %s, %s)
-        """, (user_id, content, media_url if media_url else None))
-    
+            VALUES (%s, %s, NULL)
+        """, (user_id, content))
+        
+        post_id = cursor.lastrowid
+
+        if media_file and media_file.filename != "":
+            ext = media_file.filename.rsplit('.', 1)[-1].lower()
+            new_filename = f"{username}_{post_id}_image.{ext}"
+            upload_folder = os.path.join("app", "static", "img", "post")
+            os.makedirs(upload_folder, exist_ok=True) 
+            
+            filepath = os.path.join(upload_folder, new_filename)
+            media_file.save(filepath)
+            
+            media_url = url_for('static', filename=f'img/post/{new_filename}')
+
+            cursor.execute("""
+                UPDATE posts 
+                SET media_url = %s 
+                WHERE id = %s
+            """, (media_url, post_id))
+
     db.commit() 
 
-    return redirect(url_for("main.feed"))
+    return redirect(request.referrer or url_for("main.feed"))
 
 #-------------------------------------------------------------
-# Like / Unlike
+# Système de like/unlike basique
 #-------------------------------------------------------------
 
 @bp.route("/like/<int:post_id>", methods=["POST"])
 def like_post(post_id):
+    if 'user_id' not in session:
+        return redirect(url_for("main.connexion"))
+        
     db = get_db()
-    user_id = 1
+    user_id = session['user_id']
 
     with db.cursor() as cursor:
         cursor.execute("""
@@ -120,12 +149,15 @@ def like_post(post_id):
             """, (user_id, post_id))
             db.commit()
 
-    return redirect(url_for("main.feed"))
+    return redirect(request.referrer or url_for("main.feed"))
 
 @bp.route("/unlike/<int:post_id>", methods=["POST"])
 def unlike_post(post_id):
+    if 'user_id' not in session:
+        return redirect(url_for("main.connexion"))
+        
     db = get_db()
-    user_id = 1
+    user_id = session['user_id']
 
     with db.cursor() as cursor:
         cursor.execute("""
@@ -134,21 +166,24 @@ def unlike_post(post_id):
         """, (user_id, post_id))
         db.commit()
 
-    return redirect(url_for("main.feed"))
+    return redirect(request.referrer or url_for("main.feed"))
 
-#-------------------------------------------------------------
-# Commentaires
-#-------------------------------------------------------------
+#----------------------------------
+# Système de commentaires basique
+#----------------------------------
 
 @bp.route("/comment/<int:post_id>", methods=["POST"])
 def add_comment(post_id):
+    if 'user_id' not in session:
+        return redirect(url_for("main.connexion"))
+        
     db = get_db()
-    user_id = 1
+    user_id = session['user_id']
 
     content = request.form.get("content", "").strip()
 
     if not content:
-        return redirect(url_for("main.feed"))
+        return redirect(request.referrer or url_for("main.feed"))
 
     with db.cursor() as cursor:
         cursor.execute("""
@@ -157,27 +192,52 @@ def add_comment(post_id):
         """, (user_id, content, None, post_id))
         db.commit()
 
-    return redirect(url_for("main.feed"))
+    return redirect(request.referrer or url_for("main.feed"))
+
+#----------------------------------
+# Afficher un post en grand
+#----------------------------------
 
 @bp.route("/post/<int:post_id>")
 def view_post(post_id):
     db = get_db()
+    current_user_id = session.get('user_id', 1) 
 
     with db.cursor() as cursor:
+        cursor.execute("SELECT * FROM users WHERE id = %s", (current_user_id,))
+        current_user = cursor.fetchone()
+
         cursor.execute("""
             SELECT
                 posts.id,
+                posts.user_id,
                 posts.content,
                 posts.media_url,
                 posts.created_at,
                 users.username,
                 users.display_name,
-                users.avatar_url
+                users.avatar_url,
+                COUNT(DISTINCT likes.id) AS like_count,
+                COUNT(DISTINCT replies.id) AS comment_count,
+                EXISTS (
+                    SELECT 1
+                    FROM likes AS my_like
+                    WHERE my_like.post_id = posts.id
+                      AND my_like.user_id = %s
+                ) AS liked_by_me
             FROM posts
             JOIN users ON users.id = posts.user_id
+            LEFT JOIN likes ON likes.post_id = posts.id
+            LEFT JOIN posts AS replies ON replies.reply_to_post_id = posts.id
             WHERE posts.id = %s
-        """, (post_id,))
+            GROUP BY 
+                posts.id, posts.user_id, posts.content, posts.media_url, posts.created_at,
+                users.username, users.display_name, users.avatar_url
+        """, (current_user_id, post_id))
         post = cursor.fetchone()
+
+        if not post:
+            return redirect(url_for("main.feed"))
 
         cursor.execute("""
             SELECT
@@ -194,16 +254,19 @@ def view_post(post_id):
         """, (post_id,))
         comments = cursor.fetchall()
 
-    return render_template("post.html", post=post, comments=comments)
+    return render_template("view_post.html", post=post, comments=comments, current_user=current_user)
 
-#-------------------------------------------------------------
-# Suppression d'un post
-#-------------------------------------------------------------
+#----------------
+# Delete un post
+#----------------
 
 @bp.route("/delete-post/<int:post_id>", methods=["POST"])
 def delete_post(post_id):
+    if 'user_id' not in session:
+        return redirect(url_for("main.connexion"))
+        
     db = get_db()
-    current_user_id = 1
+    current_user_id = session['user_id']
 
     with db.cursor() as cursor:
         cursor.execute("""
@@ -213,10 +276,7 @@ def delete_post(post_id):
         """, (post_id,))
         post = cursor.fetchone()
 
-        if post is None:
-            return redirect(url_for("main.feed"))
-
-        if post["user_id"] != current_user_id:
+        if post is None or post["user_id"] != current_user_id:
             return redirect(url_for("main.feed"))
 
         cursor.execute("""
@@ -227,20 +287,17 @@ def delete_post(post_id):
 
     return redirect(url_for("main.feed"))
 
-#-------------------------------------------------------------
-# Profils
-#-------------------------------------------------------------
+#------------------------------
+# Profil unique
+#------------------------------
 
 @bp.route("/profile/<username>")
 def profile(username):
     db = get_db()
+    current_user_id = session.get('user_id')
 
     with db.cursor() as cursor:
-        cursor.execute("""
-            SELECT *
-            FROM users
-            WHERE username = %s
-        """, (username,))
+        cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
         user = cursor.fetchone()
 
         if user is None:
@@ -258,84 +315,64 @@ def profile(username):
             ORDER BY created_at DESC
         """, (user["id"],))
         posts = cursor.fetchall()
+        
+        cursor.execute("SELECT * FROM users WHERE id = %s", (current_user_id,))
+        current_user = cursor.fetchone()
 
-    return render_template("profil.html", user=user, posts=posts)
+    return render_template("profil.html", user=user, posts=posts, current_user=current_user)
 
-@bp.route("/monprofil")
-def monprofil():
-    if 'user_id' not in session:
-        return redirect(url_for("main.connexion"))
-    return render_template("profil.html")
+@bp.route("/edit-profile")
+def edit_profile():
+    db = get_db()
+    current_user_id = 1 # Temporaire, comme le reste de ton code
 
-#-------------------------------------------------------------
-# Login → redirige vers connexion
-#-------------------------------------------------------------
+    with db.cursor() as cursor:
+        cursor.execute("SELECT * FROM users WHERE id = %s", (current_user_id,))
+        current_user = cursor.fetchone()
 
-@bp.route("/login")
-def login():
-    return redirect(url_for('main.connexion'))
+    return render_template("edit_profil.html", current_user=current_user)
 
-#-------------------------------------------------------------
-# Connexion
-#-------------------------------------------------------------
+
+#------------------------------
+# Connexion / Inscription
+#------------------------------
 
 @bp.route('/connexion', methods=['GET', 'POST'])
 def connexion():
     error = None
-
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
         password = request.form.get('password', '').strip()
-
         db = get_db()
         with db.cursor() as cursor:
             cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
             user = cursor.fetchone()
-
-        if user is None:
-            error = "Identifiant introuvable."
-        elif user['password_hash'] != password:
-            error = "Mot de passe incorrect."
-        else:
+        if user and user['password_hash'] == password:
             session['user_id'] = user['id']
             session['username'] = user['username']
             return redirect(url_for('main.feed'))
-
+        error = "Identifiants incorrects."
     return render_template('login.html', error=error)
-
-#-------------------------------------------------------------
-# Inscription
-#-------------------------------------------------------------
 
 @bp.route('/inscription', methods=['GET', 'POST'])
 def inscription():
-    error = None
-
     if request.method == 'POST':
-        username = request.form.get('username', '').strip()
-        display_name = request.form.get('display_name', '').strip()
-        email = request.form.get('email', '').strip()
-        password = request.form.get('password', '').strip()
-        confirm_password = request.form.get('confirm_password', '').strip()
+        db = get_db()
+        with db.cursor() as cursor:
+            cursor.execute(
+                "INSERT INTO users (username, display_name, email, password_hash) VALUES (%s, %s, %s, %s)",
+                (request.form.get('username'), request.form.get('display_name'), 
+                 request.form.get('email'), request.form.get('password'))
+            )
+            db.commit()
+        return redirect(url_for('main.connexion'))
+    return render_template('inscription.html')
 
-        if not username or not display_name or not email or not password or not confirm_password:
-            error = "Tous les champs sont obligatoires."
-        elif password != confirm_password:
-            error = "Les mots de passe ne correspondent pas."
-        else:
-            db = get_db()
-            with db.cursor() as cursor:
-                cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
-                existing_user = cursor.fetchone()
+@bp.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("main.connexion"))
 
-                if existing_user:
-                    error = "Cet identifiant est déjà pris."
-                else:
-                    cursor.execute(
-                        "INSERT INTO users (username, display_name, email, password_hash) VALUES (%s, %s, %s, %s)",
-                        (username, display_name, email, password)
-                    )
-                    db.commit()
-                    return redirect(url_for('main.connexion'))
-
-    return render_template('inscription.html', error=error)
+@bp.route("/test")
+def test():
+    return "ok"
