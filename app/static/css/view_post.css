@@ -1,10 +1,12 @@
+/* =================================================
+   1. BASE & LAYOUT PRINCIPAL
+================================================= */
 body {
     margin: 0;
     background-color: #141313;
     font-family: Arial, sans-serif;
 }
 
-/* -------- Layout principal -------- */
 .layout {
     margin-left: 0px;
     min-height: 100vh;
@@ -15,7 +17,9 @@ body {
     transition: transform 0.2s ease;
 }
 
-/* --------------- Feed  ---------------- */
+/* =================================================
+   2. FEED & CONTENEUR POSTS
+================================================= */
 .feed {
     width: 100%;
     max-width: 950px;
@@ -30,7 +34,9 @@ body {
     order: 2; 
 }
 
-/* ------------------ Post --------------- */
+/* =================================================
+   3. DESIGN DES POSTS
+================================================= */
 .post {
     display: flex;
     gap: 15px;
@@ -90,6 +96,17 @@ body {
     align-items: center;
 }
 
+.post-username {
+    color: #A7A7A5;
+}
+
+.post-time {
+    color: #A7A7A5;
+}
+
+/* =================================================
+   4. MENU CONTEXTUEL DES POSTS
+================================================= */
 .post-menu-container {
     position: relative;
 }
@@ -149,16 +166,9 @@ body {
     background: rgba(255, 107, 107, 0.1);
 }
 
-.post-username {
-    color: #A7A7A5;
-}
-
-.post-time {
-    color: #A7A7A5;
-}
-
-/* ------------ Actions du post ------------------*/
-
+/* =================================================
+   5. ACTIONS DES POSTS
+================================================= */
 .post-actions {
     display: flex;
     gap: 15px; 
@@ -216,8 +226,9 @@ form[action*="like"] .action-btn:hover {
     color: #f91880;
 }
 
-/*-------------------- Commentaires ------------------*/
-
+/* =================================================
+   6. SECTION COMMENTAIRES
+================================================= */
 .post-comments-preview {
     margin-top: 14px;
     padding-top: 10px;
@@ -286,6 +297,9 @@ form[action*="like"] .action-btn:hover {
     text-decoration: underline;
 }
 
+/* =================================================
+   7. FORMULAIRE DE COMMENTAIRES
+================================================= */
 .comment-form {
     margin-top: 14px;
     display: flex;
@@ -320,8 +334,24 @@ form[action*="like"] .action-btn:hover {
     opacity: 0.9;
 }
 
-/*-------------- Poster ---------------------*/
+.comment-section {
+    padding: 15px;
+    border-bottom: 1px solid #333;
+}
 
+.empty-state {
+    padding: 30px;
+    text-align: center;
+    color: #8b98a5;
+}
+
+.link-unstyled {
+    text-decoration: none;
+}
+
+/* =================================================
+   8. FORMULAIRE DE CRÉATION DE POST
+================================================= */
 .create-post-form {
     width: 100%;
     max-width: 100%; 
@@ -359,6 +389,9 @@ form[action*="like"] .action-btn:hover {
     gap: 12px;
 }
 
+/* =================================================
+   9. BOUTONS DE POST ET MÉDIAS
+================================================= */
 .media-trigger-btn,
 .publish-btn,
 .primary-btn,
@@ -430,6 +463,9 @@ form[action*="like"] .action-btn:hover {
     opacity: 0.92;
 }
 
+/* =================================================
+   10. MODALES POUR LES MÉDIAS
+================================================= */
 .media-modal-overlay {
     position: fixed;
     inset: 0;
@@ -600,4 +636,28 @@ form[action*="like"] .action-btn:hover {
 .main-post-detail .post-text {
     font-size: 18px; 
     margin-top: 15px;
+}
+
+.post-avatar a {
+    text-decoration: none !important;
+    display: block;
+    line-height: 0;
+    color: transparent !important; 
+}
+
+.post-header-left a {
+    text-decoration: none !important;
+    color: inherit !important;
+}
+
+.post-header-left a:hover .post-name {
+    text-decoration: underline !important;
+}
+
+.post-avatar img:hover {
+    filter: brightness(0.9);
+}
+
+.post-avatar img {
+    font-size: 0;
 }

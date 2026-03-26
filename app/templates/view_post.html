@@ -1,54 +1,62 @@
 <!doctype html>
 <html lang="fr">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Post de {{ post['display_name'] }}</title>
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/view_post.css') }}" />
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar-left.css') }}" />
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar-right.css') }}" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  </head>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Post de {{ post['display_name'] }}</title>
+  <link rel="icon" href="{{ url_for('static', filename='img/logo.webp') }}" type="image/png" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/view_post.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar-left.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar-right.css') }}" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
 
-  <body>
-    <nav class="sidebar-sommaire">
-      <a href="{{ url_for('main.home') if 'main.home' in request.endpoint else '/' }}" class="logo">
-        <img src="{{ url_for('static', filename='img/logo.webp') }}" alt="Logo" />
+<body>
+  <!-- ========== Navbar Sidebar Gauche ========== -->
+  <nav class="sidebar-sommaire">
+    <a href="{{ url_for('main.home') if 'main.home' in request.endpoint else '/' }}" class="logo">
+      <img src="{{ url_for('static', filename='img/logo.webp') }}" alt="Logo" />
+    </a>
+
+    <div class="sommaire-section">
+      <a class="text-sidebar" href="/"><i class="fa-solid fa-house"></i> Home</a>
+      <a class="text-sidebar" href="#"><i class="fa-solid fa-user-group"></i> Amis</a>
+      <a class="text-sidebar" href="#"><i class="fa-solid fa-envelope"></i> Message</a>
+      <a class="text-sidebar" href="#"><i class="fa-solid fa-heart"></i> Like</a>
+    </div>
+
+    <!-- Profil utilisateur -->
+    <div class="profil-section">
+      <a href="{{ url_for('main.profile', username=current_user['username']) }}">
+        <img src="{{ url_for('static', filename='img/Avatar/' + current_user['avatar_url']) if current_user['avatar_url'] else url_for('static', filename='img/Avatar/47fef09b5e072de28b79f35d0ef4e9cc.webp') }}" alt="Avatar" />
       </a>
-      <div class="sommaire-section">
-        <a class="text-sidebar" href="/"><i class="fa-solid fa-house"></i> Home</a>
-        <a class="text-sidebar" href="#"><i class="fa-solid fa-user-group"></i> Amis</a>
-        <a class="text-sidebar" href="#"><i class="fa-solid fa-envelope"></i> Message</a>
-        <a class="text-sidebar" href="#"><i class="fa-solid fa-heart"></i> Like</a>
-      </div>
-      <div class="profil-section">
-        <a href="{{ url_for('main.profile', username=current_user['username']) }}">
-          <img src="{{ url_for('static', filename='img/Avatar/' + current_user['avatar_url']) if current_user['avatar_url'] else url_for('static', filename='img/Avatar/47fef09b5e072de28b79f35d0ef4e9cc.webp') }}" alt="Avatar" />
-        </a>
-        <a class="text-sidebar" href="{{ url_for('main.profile', username=current_user['username']) }}">
-          {{ current_user['display_name'] }}
-        </a>
-      </div>
-    </nav>
+      <a class="text-sidebar" href="{{ url_for('main.profile', username=current_user['username']) }}">
+        {{ current_user['display_name'] }}
+      </a>
+    </div>
+  </nav>
 
-    <main class="layout">
-      <section class="feed">
-        
-        <div class="page-header">
-          <a href="/"><i class="fa-solid fa-arrow-left"></i></a>
-          <span>Post</span>
-        </div>
+  <!-- ========== Contenu Principal ========== -->
+  <main class="layout">
+    <section class="feed">
+      <!-- En-tête avec bouton retour -->
+      <div class="page-header">
+        <a href="javascript:history.back()"><i class="fa-solid fa-arrow-left"></i></a>
+        <span>Post</span>
+      </div>
 
-        <div class="feed-container">
-          
-          <article class="post main-post-detail">
+      <!-- Conteneur du fil -->
+      <div class="feed-container">
+        <!-- Post principal détaillé -->
+        <article class="post main-post-detail">
             <div class="post-avatar">
-              <img src="{{ url_for('static', filename='img/Avatar/' + post['avatar_url']) if post['avatar_url'] else url_for('static', filename='img/Avatar/47fef09b5e072de28b79f35d0ef4e9cc.webp') }}" alt="Avatar" />
+              <a href="{{ url_for('main.profile', username=post['username']) }}">
+                <img src="{{ url_for('static', filename='img/Avatar/' + post['avatar_url']) if post['avatar_url'] else url_for('static', filename='img/Avatar/47fef09b5e072de28b79f35d0ef4e9cc.webp') }}" alt="Avatar" />
+              </a>
             </div>
 
             <div class="post-body">
-              
               <header class="post-header">
                 <div class="post-header-left">
                   <a href="{{ url_for('main.profile', username=post['username']) }}">
@@ -112,65 +120,76 @@
             </div>
           </article>
 
-          <div style="padding: 15px; border-bottom: 1px solid #333;">
-            <form action="{{ url_for('main.add_comment', post_id=post['id']) }}" method="POST" class="comment-form" style="margin-top: 0;">
+          <!-- Zone de réponse du commentaire -->
+          <div class="comment-section">
+            <form action="{{ url_for('main.add_comment', post_id=post['id']) }}" method="POST" class="comment-form">
               <input type="text" name="content" placeholder="Postez votre réponse..." required style="padding: 15px; font-size: 16px;" />
               <button type="submit">Répondre</button>
             </form>
           </div>
 
+          <!-- Fil des commentaires -->
           {% for comment in comments %}
           <article class="post" style="border: none; border-bottom: 1px solid #333; border-radius: 0;">
             <div class="post-avatar">
-              <img src="{{ url_for('static', filename='img/Avatar/' + comment['avatar_url']) if comment['avatar_url'] else url_for('static', filename='img/Avatar/47fef09b5e072de28b79f35d0ef4e9cc.webp') }}" alt="Avatar" />
+              <a href="{{ url_for('main.profile', username=comment['username']) }}">
+                <img src="{{ url_for('static', filename='img/Avatar/' + comment['avatar_url']) if comment['avatar_url'] else url_for('static', filename='img/Avatar/47fef09b5e072de28b79f35d0ef4e9cc.webp') }}" alt="Avatar" />
+              </a>
             </div>
+
             <div class="post-body">
               <header class="post-header">
                 <div class="post-header-left">
-                  <span class="post-name">{{ comment['display_name'] }}</span>
-                  <span class="post-username">@{{ comment['username'] }}</span>
+                  <a href="{{ url_for('main.profile', username=comment['username']) }}" style="display: flex; gap: 6px; text-decoration: none; color: inherit;">
+                    <span class="post-name">{{ comment['display_name'] }}</span>
+                    <span class="post-username">@{{ comment['username'] }}</span>
+                  </a>
                   <span class="post-time">• {{ comment['created_at'] }}</span>
                 </div>
-                
-                </header>
+              </header>
+
               <p class="post-text">{{ comment['content'] }}</p>
             </div>
           </article>
           {% else %}
-          <div style="padding: 30px; text-align: center; color: #8b98a5;">
-            Aucune réponse pour le moment. Soyez le premier !
+          <!-- État vide -->
+          <div class="empty-state">
+            <p>Aucune réponse pour le moment. Soyez le premier !</p>
           </div>
           {% endfor %}
-
         </div>
       </section>
     </main>
 
-    <nav class="sidebar-right-sommaire">
-      <div class="sommaire-right-section">
-        <div class="weather-card">
-          <div class="weather-header">
-            <span class="city">Lyon</span>
-            <span class="date" id="current-date">Aujourd'hui</span>
+  <!-- ========== Sidebar Droite (Météo) ========== -->
+
+  <!-- ========== Sidebar Droite (Météo) ========== -->
+  <nav class="sidebar-right-sommaire">
+    <div class="sommaire-right-section">
+      <div class="weather-card">
+        <div class="weather-header">
+          <span class="city">Lyon</span>
+          <span class="date" id="current-date">Aujourd'hui</span>
+        </div>
+        <div class="weather-main">
+          <div class="temp-container">
+            <span id="temp-affichage">--</span><span class="unit">°C</span>
           </div>
-          <div class="weather-main">
-            <div class="temp-container">
-              <span id="temp-affichage">--</span><span class="unit">°C</span>
-            </div>
-          </div>
-          <div class="weather-icon">☁️</div>
-          <div class="weather-details">
-            <div class="detail-item">
-              <span class="label">VENT</span>
-              <span id="vent-affichage">-- km/h</span>
-            </div>
+        </div>
+        <div class="weather-icon">☁️</div>
+        <div class="weather-details">
+          <div class="detail-item">
+            <span class="label">VENT</span>
+            <span id="vent-affichage">-- km/h</span>
           </div>
         </div>
       </div>
-    </nav>
+    </div>
+  </nav>
 
-    <script src="{{ url_for('static', filename='javascript/menu_contextuel.js') }}"></script>
-    <script src="{{ url_for('static', filename='javascript/meteo.js') }}"></script>
+  <!-- ========== Scripts ========== -->
+  <script src="{{ url_for('static', filename='javascript/menu_contextuel.js') }}"></script>
+  <script src="{{ url_for('static', filename='javascript/meteo.js') }}"></script>
+</body>
 
-  </body>
 </html>

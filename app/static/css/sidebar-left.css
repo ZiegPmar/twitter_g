@@ -1,6 +1,6 @@
-/* ==========================================
-   SIDEBAR PRINCIPALE
-============================================= */
+/* =================================================
+   1. STRUCTURE DE LA SIDEBAR
+================================================= */
 .sidebar-sommaire {
     box-sizing: border-box;
     width: 240px;
@@ -16,7 +16,9 @@
     flex-direction: column;
 }
 
-/* --- LOGO --- */
+/* =================================================
+   2. LOGO DE LA SIDEBAR
+================================================= */
 .logo {
     display: block;
     margin-bottom: 30px;
@@ -28,7 +30,9 @@
     height: auto;
 }
 
-/* --- NAVIGATION --- */
+/* =================================================
+   3. NAVIGATION PRINCIPALE
+================================================= */
 .sommaire-section {
     flex-grow: 1; 
     display: flex;
@@ -55,7 +59,14 @@
     margin-right: 10px;
 }
 
-/* --- BOUTON PUBLIER --- */
+.text-sidebar{
+    text-decoration: none;
+    color: #cdcdcd;
+}
+
+/* =================================================
+   4. BOUTON PUBLIER
+================================================= */
 .sidebar-publish-btn {
     background-color: #1d9bf0;
     color: white;
@@ -66,7 +77,8 @@
     font-weight: bold;
     cursor: pointer;
     width: 90%;
-    margin-top: 240px; 
+    margin-top: auto; 
+    margin-bottom: 10px;
     transition: background-color 0.2s ease;
 }
 
@@ -74,9 +86,9 @@
     background-color: #1a8cd8; 
 }
 
-/* ==========================================
-   SECTION PROFIL (BAS DE SIDEBAR)
-============================================= */
+/* =================================================
+   5. SECTION PROFIL (BAS DE SIDEBAR)
+================================================= */
 .profil-section {
     display: flex;
     align-items: center; 
@@ -126,7 +138,9 @@
     font-size: 14px;
 }
 
-/* --- BOUTON LOGOUT --- */
+/* =================================================
+   6. BOUTON LOGOUT
+================================================= */
 .logout-btn {
     color: white; 
     font-size: 18px;
@@ -147,9 +161,9 @@
     text-decoration: none; 
 }
 
-/* ==========================================
-                    POPUP
-============================================= */
+/* =================================================
+   7. MODAL DE PUBLICATION
+================================================= */
 .publish-modal-overlay {
     position: fixed;
     inset: 0;
@@ -220,6 +234,9 @@
     color: #8b98a5;
 }
 
+/* =================================================
+   8. FOOTER MODAL & OUTILS
+================================================= */
 .publish-modal-footer {
     display: flex;
     justify-content: space-between;
@@ -269,7 +286,9 @@
     background: #1a8cd8;
 }
 
-/* --- APERÇU MÉDIA MODAL --- */
+/* =================================================
+   9. APERÇU MÉDIA DANS MODAL
+================================================= */
 .modal-img-preview-container {
     position: relative;
     margin-bottom: 15px;
@@ -300,7 +319,9 @@
     backdrop-filter: blur(4px);
 }
 
-/* --- EMOJI PICKER --- */
+/* =================================================
+   10. EMOJI PICKER
+================================================= */
 .emoji-picker-container {
     position: absolute;
     top: 100%;
@@ -310,9 +331,4 @@
     z-index: 1000;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
     border-radius: 10px;
-}
-
-.text-sidebar{
-    text-decoration: none;
-    color: #cdcdcd;
 }

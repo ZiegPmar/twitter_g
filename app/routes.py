@@ -293,39 +293,140 @@ def delete_post(post_id):
 
 @bp.route("/profile/<username>")
 def profile(username):
+    
+    if 'user_id' not in session:
+        return redirect(url_for("main.connexion"))
+        
     db = get_db()
-    current_user_id = session.get('user_id')
+    current_user_id = session['user_id']
 
     with db.cursor() as cursor:
+       
         cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
         user = cursor.fetchone()
 
         if user is None:
             return "Utilisateur introuvable", 404
 
+        
+        cursor.execute("SELECT * FROM users WHERE id = %s", (current_user_id,))
+        current_user = cursor.fetchone()
+
+        
         cursor.execute("""
             SELECT
                 posts.id,
                 posts.content,
                 posts.media_url,
-                posts.created_at
+                posts.created_at,
+                users.username,
+                users.display_name,
+                users.avatar_url,
+                COUNT(DISTINCT likes.id) AS like_count,
+                COUNT(DISTINCT replies.id) AS comment_count,
+                EXISTS (
+                    SELECT 1
+                    FROM likes AS my_like
+                    WHERE my_like.post_id = posts.id
+                      AND my_like.user_id = %s
+                ) AS liked_by_me
             FROM posts
-            WHERE user_id = %s
-              AND reply_to_post_id IS NULL
-            ORDER BY created_at DESC
-        """, (user["id"],))
-        posts = cursor.fetchall()
-        
-        cursor.execute("SELECT * FROM users WHERE id = %s", (current_user_id,))
-        current_user = cursor.fetchone()
+            JOIN users ON users.id = posts.user_id
+            LEFT JOIN likes ON likes.post_id = posts.id
+            LEFT JOIN posts AS replies ON replies.reply_to_post_id = posts.id
+            WHERE posts.user_id = %s
+              AND posts.reply_to_post_id IS NULL
+            GROUP BY posts.id, posts.content, posts.media_url, posts.created_at,
+                     users.username, users.display_name, users.avatar_url
+            ORDER BY posts.created_at DESC
+        """, (current_user_id, user["id"]))
+        raw_posts = cursor.fetchall()
+
+    
+        posts = []
+        for row in raw_posts:
+            post = dict(row)
+
+            cursor.execute("""
+                SELECT
+                    posts.id,
+                    posts.content,
+                    posts.created_at,
+                    users.username,
+                    users.display_name,
+                    users.avatar_url
+                FROM posts
+                JOIN users ON users.id = posts.user_id
+                WHERE posts.reply_to_post_id = %s
+                ORDER BY posts.created_at DESC
+                LIMIT 3
+            """, (post["id"],))
+            comments_preview = cursor.fetchall()
+
+            post["comments_preview"] = [dict(comment) for comment in comments_preview]
+            posts.append(post)
 
     return render_template("profil.html", user=user, posts=posts, current_user=current_user)
 
-@bp.route("/edit-profile")
+@bp.route("/edit-profile", methods=["GET", "POST"])
 def edit_profile():
+    if 'user_id' not in session:
+        return redirect(url_for("main.connexion"))
+    
     db = get_db()
-    current_user_id = 1 # Temporaire, comme le reste de ton code
+    current_user_id = session['user_id']
+    username = session['username']
 
+    if request.method == "POST":
+       
+        display_name = request.form.get("display_name", "").strip()
+        bio = request.form.get("bio", "").strip()
+        email = request.form.get("email", "").strip()
+
+       
+        avatar_file = request.files.get("avatar")
+        banner_file = request.files.get("banner")
+
+        avatar_filename = None
+        banner_filename = None
+
+        
+        if avatar_file and avatar_file.filename != "":
+            ext = avatar_file.filename.rsplit('.', 1)[-1].lower()
+            avatar_filename = f"{username}_avatar.{ext}"
+            upload_folder = os.path.join("app", "static", "img", "Avatar")
+            os.makedirs(upload_folder, exist_ok=True)
+            avatar_file.save(os.path.join(upload_folder, avatar_filename))
+
+        
+        if banner_file and banner_file.filename != "":
+            ext = banner_file.filename.rsplit('.', 1)[-1].lower()
+            banner_filename = f"{username}_banner.{ext}"
+            upload_folder = os.path.join("app", "static", "img", "banniere")
+            os.makedirs(upload_folder, exist_ok=True)
+            banner_file.save(os.path.join(upload_folder, banner_filename))
+
+       
+        with db.cursor() as cursor:
+            
+            cursor.execute("""
+                UPDATE users 
+                SET display_name = %s, bio = %s, email = %s
+                WHERE id = %s
+            """, (display_name, bio, email, current_user_id))
+            
+            
+            if avatar_filename:
+                cursor.execute("UPDATE users SET avatar_url = %s WHERE id = %s", (avatar_filename, current_user_id))
+            if banner_filename:
+                cursor.execute("UPDATE users SET banner_url = %s WHERE id = %s", (banner_filename, current_user_id))
+            
+            db.commit()
+        
+        
+        return redirect(url_for("main.profile", username=username))
+
+    
     with db.cursor() as cursor:
         cursor.execute("SELECT * FROM users WHERE id = %s", (current_user_id,))
         current_user = cursor.fetchone()

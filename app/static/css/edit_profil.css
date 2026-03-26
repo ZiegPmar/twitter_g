@@ -1,83 +1,42 @@
-/* --- Structure Globale --- */
+/* =================================================
+   1. BASE & RÉINITIALISATION
+================================================= */
+* {
+    box-sizing: border-box;
+}
+
 body {
     background-color: #121212;
     margin: 0;
     font-family: Arial, sans-serif;
 }
 
+/* =================================================
+   2. STRUCTURE GÉNÉRALE & LAYOUT
+================================================= */
 .main {
-    margin-left: 240px; /* Espace sidebar gauche */
-    margin-right: 240px; /* Espace sidebar droite */
-    padding: 0; /* On gère le padding dans les containers pour le header collant */
+    margin-left: 240px;
+    margin-right: 240px;
+    padding: 0;
     display: flex;
     flex-direction: column;
-    align-items: center; /* Centre tout le bloc éditer */
+    align-items: center;
 }
 
-/* Container identique au profil */
 .profile-container {
     width: 100%;
     max-width: 900px;
     border: 1px solid #333;
-    border-top: none; /* Déjà géré par le border-bottom du header */
+    border-top: none;
     background-color: #141313;
     border-bottom-left-radius: 8px;
     border-bottom-right-radius: 8px;
-    overflow: visible; /* Important pour laisser l'avatar dépasser si besoin */
+    overflow: visible;
 }
 
-/* --- Header Navigation (Fixé pour le bouton Enregistrer) --- */
-.profile-nav-header {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    padding: 0 15px !important;
-    height: 53px !important;
-    background-color: #141313 !important;
-    border-bottom: 1px solid #333 !important;
-    
-    width: 100% !important;
-    max-width: 900px !important; /* Identique au container */
-    box-sizing: border-box !important;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-}
-
-.header-left-group {
-    display: flex !important;
-    align-items: center !important;
-    gap: 20px !important;
-}
-
-.save-btn {
-    background-color: #cdcdcd !important;
-    color: black !important;
-    border: none !important;
-    padding: 6px 16px !important;
-    border-radius: 20px !important;
-    font-weight: bold !important;
-    cursor: pointer !important;
-    font-size: 14px !important;
-    /* On enlève le min-width s'il était trop grand */
-    min-width: 80px !important; 
-}
-
-.back-btn {
-    color: #cdcdcd;
-    font-size: 20px;
-    text-decoration: none;
-    cursor: pointer;
-}
-
-.header-title {
-    font-size: 20px;
-    font-weight: 700;
-    margin: 0;
-    color: #cdcdcd;
-}
-
-/* --- Bannière --- */
+/* =================================================
+   3. BANNIÈRE & IMAGE PRINCIPALE
+================================================= */
 .banner {
     width: 800px;
     height: 250px;
@@ -91,7 +50,9 @@ body {
     object-fit: cover;
 }
 
-/* --- Avatar & Centrage Appareil Photo --- */
+/* =================================================
+   4. AVATAR & SECTION PROFIL
+================================================= */
 .profile-info-section {
     padding: 0 15px 15px 15px;
     position: relative;
@@ -105,7 +66,7 @@ body {
 
 .avatar-container {
     position: absolute;
-    top: -70px; /* Ajuste selon la hauteur de ta bannière */
+    top: -70px;
     left: 15px;
     width: 140px;
     height: 140px;
@@ -145,7 +106,61 @@ body {
     text-align: center;
 }
 
-/* --- Formulaire d'édition --- */
+/* =================================================
+   5. HEADER DE NAVIGATION FIXE
+================================================= */
+.profile-nav-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 0 15px !important;
+    height: 53px !important;
+    background-color: #141313 !important;
+    border-bottom: 1px solid #333 !important;
+    
+    width: 100% !important;
+    max-width: 900px !important;
+    box-sizing: border-box !important;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-left-group {
+    display: flex !important;
+    align-items: center !important;
+    gap: 20px !important;
+}
+
+.back-btn {
+    color: #cdcdcd;
+    font-size: 20px;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.header-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0;
+    color: #cdcdcd;
+}
+
+.save-btn {
+    background-color: #cdcdcd !important;
+    color: black !important;
+    border: none !important;
+    padding: 6px 16px !important;
+    border-radius: 20px !important;
+    font-weight: bold !important;
+    cursor: pointer !important;
+    font-size: 14px !important;
+    min-width: 80px !important; 
+}
+
+/* =================================================
+   6. FORMULAIRE D'ÉDITION
+================================================= */
 .user-details-edit {
     margin-top: 20px;
     display: flex;
@@ -183,7 +198,9 @@ body {
     resize: none;
 }
 
-/* --- Autres sections --- */
+/* =================================================
+   7. SECTION DATE DE NAISSANCE
+================================================= */
 .birthdate-section {
     display: flex;
     justify-content: space-between;
@@ -193,7 +210,14 @@ body {
     border-top: 1px solid #333;
 }
 
-.birthdate-text .label { color: #71767b; display: block; }
-.birthdate-text .value { color: #1d9bf0; font-size: 16px; }
+.birthdate-text .label { 
+    color: #71767b; 
+    display: block; 
+}
+
+.birthdate-text .value { 
+    color: #1d9bf0; 
+    font-size: 16px; 
+}
 
 

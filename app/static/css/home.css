@@ -1,10 +1,12 @@
+/* =================================================
+   1. BASE & LAYOUT PRINCIPAL
+================================================= */
 body {
     margin: 0;
     background-color: #141313;
     font-family: Arial, sans-serif;
 }
 
-/* -------- Layout principal -------- */
 .layout {
     margin-left: 0px;
     min-height: 100vh;
@@ -15,7 +17,9 @@ body {
     transition: transform 0.2s ease;
 }
 
-/* --------------- Feed  ---------------- */
+/* =================================================
+   2. FEED & CONTENEUR POSTS
+================================================= */
 .feed {
     width: 100%;
     max-width: 950px;
@@ -30,15 +34,23 @@ body {
     order: 2; 
 }
 
-/* ------------------ Post --------------- */
+/* =================================================
+   3. DESIGN DES POSTS
+================================================= */
 .post {
     display: flex;
     gap: 15px;
     padding: 20px;
-    border: 1px solid #333;
+    border: 1px solid #333; 
     color: white;
     background: #141313;
     border-radius: 12px;
+    transition: background-color 0.2s ease; 
+}
+
+.post:hover {
+    background-color: rgba(255, 255, 255, 0.05); 
+    cursor: pointer; 
 }
 
 .post-avatar img {
@@ -90,6 +102,25 @@ body {
     align-items: center;
 }
 
+.post-username {
+    color: #A7A7A5;
+}
+
+.post-time {
+    color: #A7A7A5;
+}
+
+.post-content-link {
+    text-decoration: none !important;
+    color: white !important;
+    display: block;
+    border-radius: 12px;
+    transition: background-color 0.2s;
+}
+
+/* =================================================
+   4. MENU CONTEXTUEL DES POSTS
+================================================= */
 .post-menu-container {
     position: relative;
 }
@@ -149,16 +180,9 @@ body {
     background: rgba(255, 107, 107, 0.1);
 }
 
-.post-username {
-    color: #A7A7A5;
-}
-
-.post-time {
-    color: #A7A7A5;
-}
-
-/* ------------ Actions du post ------------------*/
-
+/* =================================================
+   5. ACTIONS DES POSTS
+================================================= */
 .post-actions {
     display: flex;
     gap: 15px; 
@@ -179,6 +203,7 @@ body {
     transition: background-color 0.2s ease, color 0.2s ease; 
     box-sizing: border-box;
 }
+
 .action-btn .icon-wrapper {
     display: flex;
     align-items: center;
@@ -215,8 +240,9 @@ form[action*="like"] .action-btn:hover {
     color: #f91880;
 }
 
-/*-------------------- Commentaires ------------------*/
-
+/* =================================================
+   6. SECTION COMMENTAIRES
+================================================= */
 .post-comments-preview {
     margin-top: 14px;
     padding-top: 10px;
@@ -237,6 +263,7 @@ form[action*="like"] .action-btn:hover {
     height: 34px;
     border-radius: 50%;
     object-fit: cover;
+    display: block;
 }
 
 .comment-preview-body {
@@ -285,6 +312,28 @@ form[action*="like"] .action-btn:hover {
     text-decoration: underline;
 }
 
+/* Liens auteurs dans les commentaires */
+.comment-author-link {
+    text-decoration: none !important;
+    color: transparent !important;
+    display: block;
+    line-height: 0;
+}
+
+.comment-author-info-link {
+    display: flex;
+    gap: 6px;
+    text-decoration: none !important;
+    color: inherit;
+}
+
+.comment-author-info-link:hover .comment-preview-name {
+    text-decoration: underline !important;
+}
+
+/* =================================================
+   7. FORMULAIRE DE COMMENTAIRES
+================================================= */
 .comment-form {
     margin-top: 14px;
     display: flex;
@@ -319,8 +368,9 @@ form[action*="like"] .action-btn:hover {
     opacity: 0.9;
 }
 
-/*-------------- Poster ---------------------*/
-
+/* =================================================
+   8. FORMULAIRE DE CRÉATION DE POST
+================================================= */
 .create-post-form {
     width: 100%;
     max-width: 100%; 
@@ -358,6 +408,9 @@ form[action*="like"] .action-btn:hover {
     gap: 12px;
 }
 
+/* =================================================
+   9. BOUTONS DE POST ET MÉDIAS
+================================================= */
 .media-trigger-btn,
 .publish-btn,
 .primary-btn,
@@ -429,6 +482,9 @@ form[action*="like"] .action-btn:hover {
     opacity: 0.92;
 }
 
+/* =================================================
+   10. MODALES POUR LES MÉDIAS
+================================================= */
 .media-modal-overlay {
     position: fixed;
     inset: 0;
@@ -504,8 +560,9 @@ form[action*="like"] .action-btn:hover {
     gap: 10px;
 }
 
-/*------------------- Refresh -----------------------*/
-
+/* =================================================
+   11. REFRESH PULL-TO-BOTTOM
+================================================= */
 .pull-refresh-bottom {
     position: fixed;
     bottom: 0;
@@ -543,7 +600,16 @@ form[action*="like"] .action-btn:hover {
     animation: spin 0.8s linear infinite;
 }
 
-@keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+/* =================================================
+   12. UTILITAIRES & STYLES DIVERS
+================================================= */
+.link-unstyled {
+    text-decoration: none;
+}
+
+.empty-post {
+    text-align: center;
+    padding: 40px;
+    color: #71767b;
+    width: 100%;
 }
