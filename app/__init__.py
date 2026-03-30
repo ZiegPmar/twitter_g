@@ -23,25 +23,35 @@ def create_app():
     # 4. EN-TÊTES DE SÉCURITÉ : CSP, CLICKJACKING, HSTS (Failles 4.2, 4.4, 6.3)
     # Flask-Talisman configure tout ça d'un coup
     csp = {
-        'default-src': '\'self\'',
+        'default-src': "'self'",
         'script-src': [
-            '\'self\'',
-            'https://cdn.jsdelivr.net',
-            'https://kit.fontawesome.com', # Si tu utilises un kit FontAwesome
+            "'self'",
+            "'unsafe-inline'",
+            "https://cdn.jsdelivr.net",
+            "https://cdnjs.cloudflare.com"
         ],
         'style-src': [
-            '\'self\'',
-            '\'unsafe-inline\'',           # AUTORISE les attributs style="..." (nécessaire pour tes inputs)
-            'https://cdn.jsdelivr.net',
-            'https://cdnjs.cloudflare.com', # Pour FontAwesome via CDN
-            'https://fonts.googleapis.com',
+            "'self'",
+            "'unsafe-inline'",
+            "https://cdnjs.cloudflare.com",
+            "https://cdn.jsdelivr.net",
+            "https://fonts.googleapis.com"
+        ],
+        'connect-src': [
+            "'self'",
+            "https://api.open-meteo.com", # <--- LE LIEN DE TON FETCH
+            "https://cdn.jsdelivr.net"     # Pour les données des Emojis
         ],
         'font-src': [
-            '\'self\'',
-            'https://cdnjs.cloudflare.com', # AUTORISE le téléchargement des icônes
-            'https://fonts.gstatic.com',
+            "'self'",
+            "https://cdnjs.cloudflare.com",
+            "https://fonts.gstatic.com"
         ],
-        'img-src': ['\'self\'', 'data:'],   # AUTORISE tes images locales et les avatars
+        'img-src': [
+            "'self'", 
+            "data:", 
+            "https://openweathermap.org"
+        ]
     }
     Talisman(app, content_security_policy=csp, force_https=False) # force_https=True en prod
 
