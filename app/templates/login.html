@@ -16,6 +16,7 @@
     <!-- Formulaire de connexion -->
     <div class="login_page">
         <form method="POST" action="{{ url_for('main.connexion') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="username">
                 <h1>Identifiant :</h1>
                 <input type="text" name="username" placeholder="Entrez votre nom d'utilisateur" required>

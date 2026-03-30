@@ -1,8 +1,18 @@
 import os
-from flask import Blueprint, render_template, request, redirect, url_for, current_app, session
+from flask import Blueprint, render_template, request, redirect, url_for, current_app, session, abort
+from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
 from .db import get_db
 
 bp = Blueprint("main", __name__)
+
+# Configuration pour la sécurité des fichiers
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+MAX_CONTENT_LENGTH = 1000 # Limite de caractères pour les posts/bios
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @bp.route("/")
 def feed():
@@ -13,30 +23,18 @@ def feed():
     current_user_id = session['user_id']
 
     with db.cursor() as cursor:
-        cursor.execute("""
-            SELECT *
-            FROM users
-            WHERE id = %s
-        """, (current_user_id,))
+        cursor.execute("SELECT * FROM users WHERE id = %s", (current_user_id,))
         current_user = cursor.fetchone()
 
         cursor.execute("""
             SELECT
-                posts.id,
-                posts.user_id, 
-                posts.content,
-                posts.media_url,
-                posts.created_at,
-                users.username,
-                users.display_name,
-                users.avatar_url,
+                posts.id, posts.user_id, posts.content, posts.media_url, posts.created_at,
+                users.username, users.display_name, users.avatar_url,
                 COUNT(DISTINCT likes.id) AS like_count,
                 COUNT(DISTINCT replies.id) AS comment_count,
                 EXISTS (
-                    SELECT 1
-                    FROM likes AS my_like
-                    WHERE my_like.post_id = posts.id
-                      AND my_like.user_id = %s
+                    SELECT 1 FROM likes AS my_like
+                    WHERE my_like.post_id = posts.id AND my_like.user_id = %s
                 ) AS liked_by_me
             FROM posts
             JOIN users ON users.id = posts.user_id
@@ -50,33 +48,24 @@ def feed():
         raw_posts = cursor.fetchall()
 
         posts = []
-
         for row in raw_posts:
             post = dict(row)
-
             cursor.execute("""
-                SELECT
-                    posts.id,
-                    posts.content,
-                    posts.created_at,
-                    users.username,
-                    users.display_name,
-                    users.avatar_url
+                SELECT posts.id, posts.content, posts.created_at,
+                       users.username, users.display_name, users.avatar_url
                 FROM posts
                 JOIN users ON users.id = posts.user_id
                 WHERE posts.reply_to_post_id = %s
-                ORDER BY posts.created_at DESC
-                LIMIT 3
+                ORDER BY posts.created_at DESC LIMIT 3
             """, (post["id"],))
             comments_preview = cursor.fetchall()
-
             post["comments_preview"] = [dict(comment) for comment in comments_preview]
             posts.append(post)
 
     return render_template("home.html", posts=posts, current_user=current_user)
 
 #-------------------------------------------------------------
-# Ajout d'un post 
+# Ajout d'un post (Sécurisé)
 #-------------------------------------------------------------
 
 @bp.route("/add-post", methods=["POST"])
@@ -91,6 +80,10 @@ def add_post():
     content = request.form.get("content", "").strip()
     media_file = request.files.get("media")
 
+    # Validation de longueur (Prévention DoS)
+    if len(content) > MAX_CONTENT_LENGTH:
+        return "Contenu trop long", 400
+
     if not content and not media_file:
         return redirect(request.referrer or url_for("main.feed"))
 
@@ -102,29 +95,25 @@ def add_post():
         
         post_id = cursor.lastrowid
 
-        if media_file and media_file.filename != "":
+        # Sécurisation de l'upload
+        if media_file and media_file.filename != "" and allowed_file(media_file.filename):
             ext = media_file.filename.rsplit('.', 1)[-1].lower()
-            new_filename = f"{username}_{post_id}_image.{ext}"
-            upload_folder = os.path.join("app", "static", "img", "post")
+            # On ne fait jamais confiance au nom original : on en génère un nouveau
+            new_filename = secure_filename(f"{username}_{post_id}_image.{ext}")
+            
+            upload_folder = os.path.join(current_app.root_path, "static", "img", "post")
             os.makedirs(upload_folder, exist_ok=True) 
             
-            filepath = os.path.join(upload_folder, new_filename)
-            media_file.save(filepath)
-            
+            media_file.save(os.path.join(upload_folder, new_filename))
             media_url = url_for('static', filename=f'img/post/{new_filename}')
 
-            cursor.execute("""
-                UPDATE posts 
-                SET media_url = %s 
-                WHERE id = %s
-            """, (media_url, post_id))
+            cursor.execute("UPDATE posts SET media_url = %s WHERE id = %s", (media_url, post_id))
 
     db.commit() 
-
     return redirect(request.referrer or url_for("main.feed"))
 
 #-------------------------------------------------------------
-# Système de like/unlike basique
+# Système de like/unlike (Requiert CSRF protection côté HTML)
 #-------------------------------------------------------------
 
 @bp.route("/like/<int:post_id>", methods=["POST"])
@@ -136,17 +125,9 @@ def like_post(post_id):
     user_id = session['user_id']
 
     with db.cursor() as cursor:
-        cursor.execute("""
-            SELECT id FROM likes
-            WHERE user_id = %s AND post_id = %s
-        """, (user_id, post_id))
-        existing_like = cursor.fetchone()
-
-        if existing_like is None:
-            cursor.execute("""
-                INSERT INTO likes (user_id, post_id)
-                VALUES (%s, %s)
-            """, (user_id, post_id))
+        cursor.execute("SELECT id FROM likes WHERE user_id = %s AND post_id = %s", (user_id, post_id))
+        if cursor.fetchone() is None:
+            cursor.execute("INSERT INTO likes (user_id, post_id) VALUES (%s, %s)", (user_id, post_id))
             db.commit()
 
     return redirect(request.referrer or url_for("main.feed"))
@@ -160,48 +141,38 @@ def unlike_post(post_id):
     user_id = session['user_id']
 
     with db.cursor() as cursor:
-        cursor.execute("""
-            DELETE FROM likes
-            WHERE user_id = %s AND post_id = %s
-        """, (user_id, post_id))
+        cursor.execute("DELETE FROM likes WHERE user_id = %s AND post_id = %s", (user_id, post_id))
         db.commit()
 
     return redirect(request.referrer or url_for("main.feed"))
-
-#----------------------------------
-# Système de commentaires basique
-#----------------------------------
 
 @bp.route("/comment/<int:post_id>", methods=["POST"])
 def add_comment(post_id):
     if 'user_id' not in session:
         return redirect(url_for("main.connexion"))
         
-    db = get_db()
-    user_id = session['user_id']
-
     content = request.form.get("content", "").strip()
-
-    if not content:
+    if not content or len(content) > MAX_CONTENT_LENGTH:
         return redirect(request.referrer or url_for("main.feed"))
 
+    db = get_db()
     with db.cursor() as cursor:
         cursor.execute("""
             INSERT INTO posts (user_id, content, media_url, reply_to_post_id)
             VALUES (%s, %s, %s, %s)
-        """, (user_id, content, None, post_id))
+        """, (session['user_id'], content, None, post_id))
         db.commit()
 
     return redirect(request.referrer or url_for("main.feed"))
 
 #----------------------------------
-# Afficher un post en grand
+# Affichage et Suppression
 #----------------------------------
 
 @bp.route("/post/<int:post_id>")
 def view_post(post_id):
     db = get_db()
-    current_user_id = session.get('user_id', 1) 
+    current_user_id = session.get('user_id') 
 
     with db.cursor() as cursor:
         cursor.execute("SELECT * FROM users WHERE id = %s", (current_user_id,))
@@ -209,44 +180,30 @@ def view_post(post_id):
 
         cursor.execute("""
             SELECT
-                posts.id,
-                posts.user_id,
-                posts.content,
-                posts.media_url,
-                posts.created_at,
-                users.username,
-                users.display_name,
-                users.avatar_url,
+                posts.id, posts.user_id, posts.content, posts.media_url, posts.created_at,
+                users.username, users.display_name, users.avatar_url,
                 COUNT(DISTINCT likes.id) AS like_count,
                 COUNT(DISTINCT replies.id) AS comment_count,
                 EXISTS (
-                    SELECT 1
-                    FROM likes AS my_like
-                    WHERE my_like.post_id = posts.id
-                      AND my_like.user_id = %s
+                    SELECT 1 FROM likes AS my_like
+                    WHERE my_like.post_id = posts.id AND my_like.user_id = %s
                 ) AS liked_by_me
             FROM posts
             JOIN users ON users.id = posts.user_id
             LEFT JOIN likes ON likes.post_id = posts.id
             LEFT JOIN posts AS replies ON replies.reply_to_post_id = posts.id
             WHERE posts.id = %s
-            GROUP BY 
-                posts.id, posts.user_id, posts.content, posts.media_url, posts.created_at,
-                users.username, users.display_name, users.avatar_url
+            GROUP BY posts.id, posts.user_id, posts.content, posts.media_url, posts.created_at,
+                     users.username, users.display_name, users.avatar_url
         """, (current_user_id, post_id))
         post = cursor.fetchone()
 
         if not post:
-            return redirect(url_for("main.feed"))
+            abort(404)
 
         cursor.execute("""
-            SELECT
-                posts.id,
-                posts.content,
-                posts.created_at,
-                users.username,
-                users.display_name,
-                users.avatar_url
+            SELECT posts.id, posts.content, posts.created_at,
+                   users.username, users.display_name, users.avatar_url
             FROM posts
             JOIN users ON users.id = posts.user_id
             WHERE posts.reply_to_post_id = %s
@@ -256,113 +213,77 @@ def view_post(post_id):
 
     return render_template("view_post.html", post=post, comments=comments, current_user=current_user)
 
-#----------------
-# Delete un post
-#----------------
-
 @bp.route("/delete-post/<int:post_id>", methods=["POST"])
 def delete_post(post_id):
     if 'user_id' not in session:
         return redirect(url_for("main.connexion"))
         
     db = get_db()
-    current_user_id = session['user_id']
-
     with db.cursor() as cursor:
-        cursor.execute("""
-            SELECT id, user_id
-            FROM posts
-            WHERE id = %s
-        """, (post_id,))
+        cursor.execute("SELECT user_id FROM posts WHERE id = %s", (post_id,))
         post = cursor.fetchone()
 
-        if post is None or post["user_id"] != current_user_id:
-            return redirect(url_for("main.feed"))
+        # Vérification stricte de propriété (Broken Access Control)
+        if post is None or post["user_id"] != session['user_id']:
+            abort(403)
 
-        cursor.execute("""
-            DELETE FROM posts
-            WHERE id = %s
-        """, (post_id,))
+        cursor.execute("DELETE FROM posts WHERE id = %s", (post_id,))
         db.commit()
 
     return redirect(url_for("main.feed"))
 
 #------------------------------
-# Profil unique
+# Profil (Sécurisé)
 #------------------------------
 
 @bp.route("/profile/<username>")
 def profile(username):
-    
     if 'user_id' not in session:
         return redirect(url_for("main.connexion"))
         
     db = get_db()
-    current_user_id = session['user_id']
-
     with db.cursor() as cursor:
-       
         cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
         user = cursor.fetchone()
-
         if user is None:
-            return "Utilisateur introuvable", 404
+            abort(404)
 
-        
-        cursor.execute("SELECT * FROM users WHERE id = %s", (current_user_id,))
+        cursor.execute("SELECT * FROM users WHERE id = %s", (session['user_id'],))
         current_user = cursor.fetchone()
 
-        
         cursor.execute("""
             SELECT
-                posts.id,
-                posts.content,
-                posts.media_url,
-                posts.created_at,
-                users.username,
-                users.display_name,
-                users.avatar_url,
+                posts.id, posts.content, posts.media_url, posts.created_at,
+                users.username, users.display_name, users.avatar_url,
                 COUNT(DISTINCT likes.id) AS like_count,
                 COUNT(DISTINCT replies.id) AS comment_count,
                 EXISTS (
-                    SELECT 1
-                    FROM likes AS my_like
-                    WHERE my_like.post_id = posts.id
-                      AND my_like.user_id = %s
+                    SELECT 1 FROM likes AS my_like
+                    WHERE my_like.post_id = posts.id AND my_like.user_id = %s
                 ) AS liked_by_me
             FROM posts
             JOIN users ON users.id = posts.user_id
             LEFT JOIN likes ON likes.post_id = posts.id
             LEFT JOIN posts AS replies ON replies.reply_to_post_id = posts.id
-            WHERE posts.user_id = %s
-              AND posts.reply_to_post_id IS NULL
+            WHERE posts.user_id = %s AND posts.reply_to_post_id IS NULL
             GROUP BY posts.id, posts.content, posts.media_url, posts.created_at,
                      users.username, users.display_name, users.avatar_url
             ORDER BY posts.created_at DESC
-        """, (current_user_id, user["id"]))
+        """, (session['user_id'], user["id"]))
         raw_posts = cursor.fetchall()
 
-    
         posts = []
         for row in raw_posts:
             post = dict(row)
-
             cursor.execute("""
-                SELECT
-                    posts.id,
-                    posts.content,
-                    posts.created_at,
-                    users.username,
-                    users.display_name,
-                    users.avatar_url
+                SELECT posts.id, posts.content, posts.created_at,
+                       users.username, users.display_name, users.avatar_url
                 FROM posts
                 JOIN users ON users.id = posts.user_id
                 WHERE posts.reply_to_post_id = %s
-                ORDER BY posts.created_at DESC
-                LIMIT 3
+                ORDER BY posts.created_at DESC LIMIT 3
             """, (post["id"],))
             comments_preview = cursor.fetchall()
-
             post["comments_preview"] = [dict(comment) for comment in comments_preview]
             posts.append(post)
 
@@ -378,55 +299,44 @@ def edit_profile():
     username = session['username']
 
     if request.method == "POST":
-       
         display_name = request.form.get("display_name", "").strip()
         bio = request.form.get("bio", "").strip()
         email = request.form.get("email", "").strip()
 
-       
+        # Validation de base
+        if len(bio) > MAX_CONTENT_LENGTH or len(display_name) > 100:
+            return "Entrée trop longue", 400
+
         avatar_file = request.files.get("avatar")
         banner_file = request.files.get("banner")
 
-        avatar_filename = None
-        banner_filename = None
-
-        
-        if avatar_file and avatar_file.filename != "":
-            ext = avatar_file.filename.rsplit('.', 1)[-1].lower()
-            avatar_filename = f"{username}_avatar.{ext}"
-            upload_folder = os.path.join("app", "static", "img", "Avatar")
-            os.makedirs(upload_folder, exist_ok=True)
-            avatar_file.save(os.path.join(upload_folder, avatar_filename))
-
-        
-        if banner_file and banner_file.filename != "":
-            ext = banner_file.filename.rsplit('.', 1)[-1].lower()
-            banner_filename = f"{username}_banner.{ext}"
-            upload_folder = os.path.join("app", "static", "img", "banniere")
-            os.makedirs(upload_folder, exist_ok=True)
-            banner_file.save(os.path.join(upload_folder, banner_filename))
-
-       
         with db.cursor() as cursor:
-            
             cursor.execute("""
-                UPDATE users 
-                SET display_name = %s, bio = %s, email = %s
+                UPDATE users SET display_name = %s, bio = %s, email = %s
                 WHERE id = %s
             """, (display_name, bio, email, current_user_id))
             
-            
-            if avatar_filename:
+            # Traitement sécurisé Avatar
+            if avatar_file and avatar_file.filename != "" and allowed_file(avatar_file.filename):
+                ext = avatar_file.filename.rsplit('.', 1)[-1].lower()
+                avatar_filename = secure_filename(f"{username}_avatar.{ext}")
+                upload_folder = os.path.join(current_app.root_path, "static", "img", "Avatar")
+                os.makedirs(upload_folder, exist_ok=True)
+                avatar_file.save(os.path.join(upload_folder, avatar_filename))
                 cursor.execute("UPDATE users SET avatar_url = %s WHERE id = %s", (avatar_filename, current_user_id))
-            if banner_filename:
+
+            # Traitement sécurisé Bannière
+            if banner_file and banner_file.filename != "" and allowed_file(banner_file.filename):
+                ext = banner_file.filename.rsplit('.', 1)[-1].lower()
+                banner_filename = secure_filename(f"{username}_banner.{ext}")
+                upload_folder = os.path.join(current_app.root_path, "static", "img", "banniere")
+                os.makedirs(upload_folder, exist_ok=True)
+                banner_file.save(os.path.join(upload_folder, banner_filename))
                 cursor.execute("UPDATE users SET banner_url = %s WHERE id = %s", (banner_filename, current_user_id))
             
             db.commit()
-        
-        
         return redirect(url_for("main.profile", username=username))
 
-    
     with db.cursor() as cursor:
         cursor.execute("SELECT * FROM users WHERE id = %s", (current_user_id,))
         current_user = cursor.fetchone()
@@ -435,7 +345,7 @@ def edit_profile():
 
 
 #------------------------------
-# Connexion / Inscription
+# Connexion / Inscription (Hachage Actif)
 #------------------------------
 
 @bp.route('/connexion', methods=['GET', 'POST'])
@@ -448,7 +358,9 @@ def connexion():
         with db.cursor() as cursor:
             cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
             user = cursor.fetchone()
-        if user and user['password_hash'] == password:
+        
+        # Comparaison sécurisée du hachage
+        if user and check_password_hash(user['password_hash'], password):
             session['user_id'] = user['id']
             session['username'] = user['username']
             return redirect(url_for('main.feed'))
@@ -459,11 +371,13 @@ def connexion():
 def inscription():
     if request.method == 'POST':
         db = get_db()
+        # Hachage du mot de passe avant insertion
+        hashed_password = generate_password_hash(request.form.get('password'))
         with db.cursor() as cursor:
             cursor.execute(
                 "INSERT INTO users (username, display_name, email, password_hash) VALUES (%s, %s, %s, %s)",
                 (request.form.get('username'), request.form.get('display_name'), 
-                 request.form.get('email'), request.form.get('password'))
+                 request.form.get('email'), hashed_password)
             )
             db.commit()
         return redirect(url_for('main.connexion'))

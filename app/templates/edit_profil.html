@@ -39,6 +39,7 @@
   <div class="main">
     <!-- Formulaire d'édition du profil -->
     <form action="{{ url_for('main.edit_profile') }}" method="POST" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <!-- En-tête du formulaire -->
       <div class="profile-nav-header">
         <div class="header-left-group">

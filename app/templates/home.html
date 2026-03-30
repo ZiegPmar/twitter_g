@@ -79,6 +79,7 @@
                 <div class="post-menu" id="menu-{{ post['id'] }}">
                   {% if post['user_id'] == 1 %}
                   <form action="{{ url_for('main.delete_post', post_id=post['id']) }}" method="POST" onsubmit="return confirm('Supprimer ce post ?');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="menu-item delete">
                       <i class="fa-regular fa-trash-can"></i> Supprimer
                     </button>
@@ -107,6 +108,7 @@
             <footer class="post-actions">
               {% if post['liked_by_me'] %}
               <form action="{{ url_for('main.unlike_post', post_id=post['id']) }}" method="POST" style="margin: 0; padding: 0; display: flex;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="action-btn liked">
                   <div class="icon-wrapper"><i class="fa-solid fa-heart"></i></div>
                   <span class="count">{{ post['like_count'] }}</span>
@@ -114,6 +116,7 @@
               </form>
               {% else %}
               <form action="{{ url_for('main.like_post', post_id=post['id']) }}" method="POST" style="margin: 0; padding: 0; display: flex;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="action-btn">
                   <div class="icon-wrapper"><i class="fa-regular fa-heart"></i></div>
                   <span class="count">{{ post['like_count'] }}</span>
@@ -166,6 +169,7 @@
 
             <!-- Formulaire de commentaire rapide -->
             <form action="{{ url_for('main.add_comment', post_id=post['id']) }}" method="POST" class="comment-form">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <input type="text" name="content" placeholder="Répondre à ce post..." />
               <button type="submit">Commenter</button>
             </form>
@@ -218,6 +222,7 @@
 
       <div class="publish-modal-body">
         <form action="{{ url_for('main.add_post') }}" method="POST" enctype="multipart/form-data">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <textarea name="content" id="modalTextarea" placeholder="Quoi de neuf ?" required></textarea>
 
           <input type="file" name="media" id="modalMediaInput" accept="image/*" style="display: none;" />
