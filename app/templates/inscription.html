@@ -16,6 +16,7 @@
     <!-- Formulaire d'inscription -->
     <div class="create_account">
         <form method="POST" action="{{ url_for('main.inscription') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="username">
                 <h1>Identifiant :</h1>
                 <input type="text" name="username" placeholder="Choisissez votre nom d'utilisateur" required>
