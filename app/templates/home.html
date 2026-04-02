@@ -124,7 +124,7 @@
                     <span class="post-name">{{ post['display_name'] }}</span>
                   </a>
                   <span class="post-username">@{{ post['username'] }}</span>
-                  <span class="post-time">• {{ post['created_at'] }}</span>
+                  <span class="post-time">• {{ post['time_ago'] }}</span>
                 </div>
 
                 <!-- Menu contextuel du post -->
@@ -260,7 +260,7 @@
                         >
                       </a>
                       <span class="comment-preview-time"
-                        >• {{ comment['created_at'] }}</span
+                        >• {{ comment['time_ago'] }}</span
                       >
                     </div>
 

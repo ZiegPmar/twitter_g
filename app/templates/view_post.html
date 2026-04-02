@@ -108,7 +108,7 @@
                     <span class="post-name">{{ post['display_name'] }}</span>
                   </a>
                   <span class="post-username">@{{ post['username'] }}</span>
-                  <span class="post-time">• {{ post['created_at'] }}</span>
+                  <span class="post-time">• {{ post['full_created_at'] }}</span>
                 </div>
 
                 <div class="post-menu-container">
@@ -255,7 +255,7 @@
                     <span class="post-name">{{ comment['display_name'] }}</span>
                     <span class="post-username">@{{ comment['username'] }}</span>
                   </a>
-                  <span class="post-time">• {{ comment['created_at'] }}</span>
+                  <span class="post-time">• {{ comment['full_created_at'] }}</span>
                 </div>
 
                 {% if comment['user_id'] == current_user['id'] %}

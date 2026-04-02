@@ -231,7 +231,7 @@
                     <span class="post-name">{{ post['display_name'] }}</span>
                   </a>
                   <span class="post-username">@{{ post['username'] }}</span>
-                  <span class="post-time">• {{ post['created_at'] }}</span>
+                  <span class="post-time">• {{ post['time_ago'] }}</span>
                 </div>
 
                 {% if post['user_id'] == current_user['id'] %}
@@ -361,7 +361,7 @@
                         >
                       </a>
                       <span class="comment-preview-time"
-                        >• {{ comment['created_at'] }}</span
+                        >• {{ comment['time_ago'] }}</span
                       >
                     </div>
                     <p class="comment-preview-text">{{ comment['content'] }}</p>

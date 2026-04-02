@@ -3,6 +3,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, curren
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from .db import get_db
+from datetime import datetime
 
 bp = Blueprint("main", __name__)
 
@@ -23,6 +24,62 @@ def get_unread_notifications_count(user_id):
             WHERE user_id = %s AND is_read = 0
         """, (user_id,))
         return cursor.fetchone()["unread_count"]
+
+def format_time_ago(dt):
+    if dt is None:
+        return ""
+
+    now = datetime.now(dt.tzinfo) if getattr(dt, "tzinfo", None) else datetime.now()
+    diff = now - dt
+
+    seconds = int(diff.total_seconds())
+
+    if seconds < 60:
+        return f"{seconds}s"
+
+    minutes = seconds // 60
+    if minutes < 60:
+        return f"{minutes}min"
+
+    hours = minutes // 60
+    if hours < 24:
+        return f"{hours}h"
+
+    days = hours // 24
+    if days < 7:
+        return f"{days}j"
+
+    weeks = days // 7
+    if weeks < 5:
+        return f"{weeks}sem"
+
+    months = days // 30
+    if months < 12:
+        return f"{months}mo"
+
+    years = days // 365
+    return f"{years}a"
+
+def format_full_datetime(dt):
+    if dt is None:
+        return ""
+
+    months = {
+        1: "janvier",
+        2: "février",
+        3: "mars",
+        4: "avril",
+        5: "mai",
+        6: "juin",
+        7: "juillet",
+        8: "août",
+        9: "septembre",
+        10: "octobre",
+        11: "novembre",
+        12: "décembre"
+    }
+
+    return f"{dt.strftime('%H:%M')} · {dt.day} {months[dt.month]} {dt.year}"
 
 @bp.route("/")
 def feed():
@@ -75,6 +132,7 @@ def feed():
         posts = []
         for row in raw_posts:
             post = dict(row)
+            post["time_ago"] = format_time_ago(post["created_at"])
 
             cursor.execute("""
                 SELECT
@@ -93,7 +151,12 @@ def feed():
             """, (post["id"],))
             comments_preview = cursor.fetchall()
 
-            post["comments_preview"] = [dict(comment) for comment in comments_preview]
+            post["comments_preview"] = []
+            for comment in comments_preview:
+                comment_dict = dict(comment)
+                comment_dict["time_ago"] = format_time_ago(comment_dict["created_at"])
+                post["comments_preview"].append(comment_dict)
+
             posts.append(post)
 
     unread_notifications_count = get_unread_notifications_count(current_user_id)
@@ -340,6 +403,10 @@ def view_post(post_id):
         if post is None:
             abort(404)
 
+        post = dict(post)
+        post["time_ago"] = format_time_ago(post["created_at"])
+        post["full_created_at"] = format_full_datetime(post["created_at"])
+
         cursor.execute("""
             SELECT
                 posts.id,
@@ -354,7 +421,14 @@ def view_post(post_id):
             WHERE posts.reply_to_post_id = %s
             ORDER BY posts.created_at ASC
         """, (post_id,))
-        comments = cursor.fetchall()
+        raw_comments = cursor.fetchall()
+
+        comments = []
+        for comment in raw_comments:
+            comment_dict = dict(comment)
+            comment_dict["time_ago"] = format_time_ago(comment_dict["created_at"])
+            comment_dict["full_created_at"] = format_full_datetime(comment_dict["created_at"])
+            comments.append(comment_dict)
 
     unread_notifications_count = get_unread_notifications_count(current_user_id)
 
@@ -465,6 +539,7 @@ def profile(username):
 
         for row in raw_posts:
             post = dict(row)
+            post["time_ago"] = format_time_ago(post["created_at"])
 
             cursor.execute("""
                 SELECT
@@ -483,7 +558,12 @@ def profile(username):
             """, (post["id"],))
             comments_preview = cursor.fetchall()
 
-            post["comments_preview"] = [dict(comment) for comment in comments_preview]
+            post["comments_preview"] = []
+            for comment in comments_preview:
+                comment_dict = dict(comment)
+                comment_dict["time_ago"] = format_time_ago(comment_dict["created_at"])
+                post["comments_preview"].append(comment_dict)
+
             posts.append(post)
 
     with db.cursor() as cursor:
