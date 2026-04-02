@@ -265,6 +265,11 @@ body {
     z-index: 2; 
 }
 
+.post-actions a {
+    text-decoration: none;
+    color: inherit;
+}
+
 .action-btn {
     display: flex;
     align-items: center;
@@ -574,3 +579,4 @@ form[action*="unlike"] .action-btn:hover {
 .menu-item.delete:hover {
     background: rgba(244, 33, 46, 0.1);
 }
+

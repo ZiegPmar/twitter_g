@@ -38,21 +38,36 @@ def feed():
 
         cursor.execute("""
             SELECT
-                posts.id, posts.user_id, posts.content, posts.media_url, posts.created_at,
-                users.username, users.display_name, users.avatar_url,
+                posts.id,
+                posts.user_id,
+                posts.content,
+                posts.media_url,
+                posts.created_at,
+                users.username,
+                users.display_name,
+                users.avatar_url,
                 COUNT(DISTINCT likes.id) AS like_count,
                 COUNT(DISTINCT replies.id) AS comment_count,
                 EXISTS (
-                    SELECT 1 FROM likes AS my_like
-                    WHERE my_like.post_id = posts.id AND my_like.user_id = %s
+                    SELECT 1
+                    FROM likes AS my_like
+                    WHERE my_like.post_id = posts.id
+                      AND my_like.user_id = %s
                 ) AS liked_by_me
             FROM posts
             JOIN users ON users.id = posts.user_id
             LEFT JOIN likes ON likes.post_id = posts.id
             LEFT JOIN posts AS replies ON replies.reply_to_post_id = posts.id
             WHERE posts.reply_to_post_id IS NULL
-            GROUP BY posts.id, posts.user_id, posts.content, posts.media_url, posts.created_at,
-                     users.username, users.display_name, users.avatar_url
+            GROUP BY
+                posts.id,
+                posts.user_id,
+                posts.content,
+                posts.media_url,
+                posts.created_at,
+                users.username,
+                users.display_name,
+                users.avatar_url
             ORDER BY posts.created_at DESC
         """, (current_user_id,))
         raw_posts = cursor.fetchall()
@@ -60,15 +75,24 @@ def feed():
         posts = []
         for row in raw_posts:
             post = dict(row)
+
             cursor.execute("""
-                SELECT posts.id, posts.content, posts.created_at,
-                       users.username, users.display_name, users.avatar_url
+                SELECT
+                    posts.id,
+                    posts.user_id,
+                    posts.content,
+                    posts.created_at,
+                    users.username,
+                    users.display_name,
+                    users.avatar_url
                 FROM posts
                 JOIN users ON users.id = posts.user_id
                 WHERE posts.reply_to_post_id = %s
-                ORDER BY posts.created_at DESC LIMIT 3
+                ORDER BY posts.created_at DESC
+                LIMIT 3
             """, (post["id"],))
             comments_preview = cursor.fetchall()
+
             post["comments_preview"] = [dict(comment) for comment in comments_preview]
             posts.append(post)
 
@@ -228,45 +252,103 @@ def add_comment(post_id):
 
     return redirect(request.referrer or url_for("main.feed"))
 
+@bp.route("/delete-comment/<int:comment_id>", methods=["POST"])
+def delete_comment(comment_id):
+    if 'user_id' not in session:
+        return redirect(url_for("main.connexion"))
+
+    db = get_db()
+    current_user_id = session['user_id']
+
+    with db.cursor() as cursor:
+        cursor.execute("""
+            SELECT id, user_id, reply_to_post_id
+            FROM posts
+            WHERE id = %s
+        """, (comment_id,))
+        comment = cursor.fetchone()
+
+        if comment is None:
+            abort(404)
+
+        if comment["user_id"] != current_user_id:
+            abort(403)
+
+        if comment["reply_to_post_id"] is None:
+            abort(400)  # ce n'est pas un commentaire
+
+        cursor.execute("DELETE FROM posts WHERE id = %s", (comment_id,))
+        db.commit()
+
+    return redirect(request.referrer or url_for("main.feed"))
+
 #----------------------------------
 # Affichage et Suppression
 #----------------------------------
 
 @bp.route("/post/<int:post_id>")
 def view_post(post_id):
+    if 'user_id' not in session:
+        return redirect(url_for("main.connexion"))
+
     db = get_db()
-    current_user_id = session.get('user_id')
+    current_user_id = session['user_id']
 
     with db.cursor() as cursor:
-        cursor.execute("SELECT * FROM users WHERE id = %s", (current_user_id,))
+        cursor.execute("""
+            SELECT *
+            FROM users
+            WHERE id = %s
+        """, (current_user_id,))
         current_user = cursor.fetchone()
 
         cursor.execute("""
             SELECT
-                posts.id, posts.user_id, posts.content, posts.media_url, posts.created_at,
-                users.username, users.display_name, users.avatar_url,
+                posts.id,
+                posts.user_id,
+                posts.content,
+                posts.media_url,
+                posts.created_at,
+                users.username,
+                users.display_name,
+                users.avatar_url,
                 COUNT(DISTINCT likes.id) AS like_count,
                 COUNT(DISTINCT replies.id) AS comment_count,
                 EXISTS (
-                    SELECT 1 FROM likes AS my_like
-                    WHERE my_like.post_id = posts.id AND my_like.user_id = %s
+                    SELECT 1
+                    FROM likes AS my_like
+                    WHERE my_like.post_id = posts.id
+                      AND my_like.user_id = %s
                 ) AS liked_by_me
             FROM posts
             JOIN users ON users.id = posts.user_id
             LEFT JOIN likes ON likes.post_id = posts.id
             LEFT JOIN posts AS replies ON replies.reply_to_post_id = posts.id
             WHERE posts.id = %s
-            GROUP BY posts.id, posts.user_id, posts.content, posts.media_url, posts.created_at,
-                     users.username, users.display_name, users.avatar_url
+            GROUP BY
+                posts.id,
+                posts.user_id,
+                posts.content,
+                posts.media_url,
+                posts.created_at,
+                users.username,
+                users.display_name,
+                users.avatar_url
         """, (current_user_id, post_id))
         post = cursor.fetchone()
 
-        if not post:
+        if post is None:
             abort(404)
 
         cursor.execute("""
-            SELECT posts.id, posts.content, posts.created_at,
-                   users.username, users.display_name, users.avatar_url
+            SELECT
+                posts.id,
+                posts.user_id,
+                posts.content,
+                posts.created_at,
+                users.username,
+                users.display_name,
+                users.avatar_url
             FROM posts
             JOIN users ON users.id = posts.user_id
             WHERE posts.reply_to_post_id = %s
@@ -290,18 +372,29 @@ def delete_post(post_id):
         return redirect(url_for("main.connexion"))
         
     db = get_db()
+    current_user_id = session['user_id']
+
     with db.cursor() as cursor:
-        cursor.execute("SELECT user_id FROM posts WHERE id = %s", (post_id,))
+        cursor.execute("""
+            SELECT id, user_id, reply_to_post_id
+            FROM posts
+            WHERE id = %s
+        """, (post_id,))
         post = cursor.fetchone()
 
-        # Vérification stricte de propriété (Broken Access Control)
-        if post is None or post["user_id"] != session['user_id']:
+        if post is None:
+            abort(404)
+
+        if post["user_id"] != current_user_id:
             abort(403)
+
+        if post["reply_to_post_id"] is not None:
+            abort(400)  # sécurité : ici on supprime seulement un vrai post, pas un commentaire
 
         cursor.execute("DELETE FROM posts WHERE id = %s", (post_id,))
         db.commit()
 
-    return redirect(url_for("main.feed"))
+    return redirect(request.referrer or url_for("main.feed"))
 
 #------------------------------
 # Profil (Sécurisé)
@@ -321,45 +414,76 @@ def profile(username):
         if user is None:
             abort(404)
 
-        cursor.execute(
-            "SELECT 1 FROM follows WHERE follower_id = %s AND following_id = %s",
-            (current_user_id, user['id'])
-        )
+        cursor.execute("""
+            SELECT 1
+            FROM follows
+            WHERE follower_id = %s AND following_id = %s
+        """, (current_user_id, user['id']))
         is_following = cursor.fetchone() is not None
 
-        cursor.execute("SELECT COUNT(*) as total FROM follows WHERE following_id = %s", (user['id'],))
+        cursor.execute("""
+            SELECT COUNT(*) AS total
+            FROM follows
+            WHERE following_id = %s
+        """, (user['id'],))
         followers_count = cursor.fetchone()['total']
 
-        cursor.execute("SELECT COUNT(*) as total FROM follows WHERE follower_id = %s", (user['id'],))
+        cursor.execute("""
+            SELECT COUNT(*) AS total
+            FROM follows
+            WHERE follower_id = %s
+        """, (user['id'],))
         following_count = cursor.fetchone()['total']
 
         cursor.execute("""
-            SELECT posts.*, users.username, users.display_name, users.avatar_url,
-            (SELECT COUNT(*) FROM likes WHERE post_id = posts.id) as like_count,
-            (SELECT COUNT(*) FROM posts as p2 WHERE p2.reply_to_post_id = posts.id) as comment_count,
-            EXISTS(SELECT 1 FROM likes WHERE user_id = %s AND post_id = posts.id) as liked_by_me
-            FROM posts 
-            JOIN users ON posts.user_id = users.id 
-            WHERE posts.user_id = %s AND posts.reply_to_post_id IS NULL
+            SELECT
+                posts.id,
+                posts.user_id,
+                posts.content,
+                posts.media_url,
+                posts.created_at,
+                posts.reply_to_post_id,
+                users.username,
+                users.display_name,
+                users.avatar_url,
+                (SELECT COUNT(*) FROM likes WHERE post_id = posts.id) AS like_count,
+                (SELECT COUNT(*) FROM posts AS p2 WHERE p2.reply_to_post_id = posts.id) AS comment_count,
+                EXISTS(
+                    SELECT 1
+                    FROM likes
+                    WHERE user_id = %s AND post_id = posts.id
+                ) AS liked_by_me
+            FROM posts
+            JOIN users ON posts.user_id = users.id
+            WHERE posts.user_id = %s
+              AND posts.reply_to_post_id IS NULL
             ORDER BY posts.created_at DESC
         """, (current_user_id, user['id']))
         
         raw_posts = cursor.fetchall()
         posts = []
+
         for row in raw_posts:
             post = dict(row)
 
             cursor.execute("""
-                SELECT posts.id, posts.content, posts.created_at,
-                       users.username, users.display_name, users.avatar_url
+                SELECT
+                    posts.id,
+                    posts.user_id,
+                    posts.content,
+                    posts.created_at,
+                    users.username,
+                    users.display_name,
+                    users.avatar_url
                 FROM posts
                 JOIN users ON users.id = posts.user_id
                 WHERE posts.reply_to_post_id = %s
-                ORDER BY posts.created_at DESC LIMIT 3
+                ORDER BY posts.created_at DESC
+                LIMIT 3
             """, (post["id"],))
             comments_preview = cursor.fetchall()
-            post["comments_preview"] = [dict(comment) for comment in comments_preview]
 
+            post["comments_preview"] = [dict(comment) for comment in comments_preview]
             posts.append(post)
 
     with db.cursor() as cursor:

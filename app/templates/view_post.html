@@ -28,12 +28,8 @@
   </head>
 
   <body>
-    <!-- ========== Navbar Sidebar Gauche ========== -->
     <nav class="sidebar-sommaire">
-      <a
-        href="{{ url_for('main.home') if 'main.home' in request.endpoint else '/' }}"
-        class="logo"
-      >
+      <a href="{{ url_for('main.feed') }}" class="logo">
         <img
           src="{{ url_for('static', filename='img/logo.webp') }}"
           alt="Logo"
@@ -41,28 +37,30 @@
       </a>
 
       <div class="sommaire-section">
-        <a class="text-sidebar" href="/"
-          ><i class="fa-solid fa-house"></i> Home</a
-        >
-        <a class="text-sidebar" href="#"
-          ><i class="fa-solid fa-user-group"></i> Amis</a
-        >
-        <a class="text-sidebar" href="#"
-          ><i class="fa-solid fa-envelope"></i> Message</a
-        >
+        <a class="text-sidebar" href="{{ url_for('main.feed') }}">
+          <i class="fa-solid fa-house"></i> Home
+        </a>
+        <a class="text-sidebar" href="#">
+          <i class="fa-solid fa-user-group"></i> Amis
+        </a>
+        <a class="text-sidebar" href="#">
+          <i class="fa-solid fa-envelope"></i> Message
+        </a>
         <a class="text-sidebar notif-sidebar-link" href="/notifications">
           <i class="fa-solid fa-bell"></i>
-          Notifications {% if unread_notifications_count and
-          unread_notifications_count > 0 %}
+          Notifications
+          {% if unread_notifications_count and unread_notifications_count > 0 %}
           <span class="notif-badge">
-            {% if unread_notifications_count > 99 %} 99+ {% else %} {{
-            unread_notifications_count }} {% endif %}
+            {% if unread_notifications_count > 99 %}
+              99+
+            {% else %}
+              {{ unread_notifications_count }}
+            {% endif %}
           </span>
           {% endif %}
         </a>
       </div>
 
-      <!-- Profil utilisateur -->
       <div class="profil-section">
         <a
           href="{{ url_for('main.profile', username=current_user['username']) }}"
@@ -81,25 +79,19 @@
       </div>
     </nav>
 
-    <!-- ========== Contenu Principal ========== -->
     <main class="layout">
       <section class="feed">
-        <!-- En-tête avec bouton retour -->
         <div class="page-header">
-          <a href="javascript:history.back()"
-            ><i class="fa-solid fa-arrow-left"></i
-          ></a>
+          <a href="javascript:history.back()">
+            <i class="fa-solid fa-arrow-left"></i>
+          </a>
           <span>Post</span>
         </div>
 
-        <!-- Conteneur du fil -->
         <div class="feed-container">
-          <!-- Post principal détaillé -->
           <article class="post main-post-detail">
             <div class="post-avatar">
-              <a
-                href="{{ url_for('main.profile', username=post['username']) }}"
-              >
+              <a href="{{ url_for('main.profile', username=post['username']) }}">
                 <img
                   src="{{ url_for('static', filename='img/Avatar/' + post['avatar_url']) if post['avatar_url'] else url_for('static', filename='img/Avatar/47fef09b5e072de28b79f35d0ef4e9cc.webp') }}"
                   alt="Avatar"
@@ -121,6 +113,7 @@
 
                 <div class="post-menu-container">
                   <button
+                    type="button"
                     class="post-menu-btn"
                     data-id="{{ post['id'] }}"
                     onclick="toggleMenu(this)"
@@ -129,7 +122,7 @@
                   </button>
 
                   <div class="post-menu" id="menu-{{ post['id'] }}">
-                    {% if post['user_id'] == 1 %}
+                    {% if post['user_id'] == current_user['id'] %}
                     <form
                       action="{{ url_for('main.delete_post', post_id=post['id']) }}"
                       method="POST"
@@ -146,7 +139,7 @@
                     </form>
                     {% endif %}
 
-                    <button class="menu-item">
+                    <button type="button" class="menu-item">
                       <i class="fa-solid fa-share"></i> Partager
                     </button>
                   </div>
@@ -156,9 +149,9 @@
               <p class="post-text">{{ post['content'] }}</p>
 
               {% if post['media_url'] %}
-              <p class="post-img">
+              <div class="post-img">
                 <img src="{{ post['media_url'] }}" alt="Image post" />
-              </p>
+              </div>
               {% endif %}
 
               <footer class="post-actions">
@@ -210,7 +203,6 @@
             </div>
           </article>
 
-          <!-- Zone de réponse du commentaire -->
           <div class="comment-section">
             <form
               action="{{ url_for('main.add_comment', post_id=post['id']) }}"
@@ -233,7 +225,6 @@
             </form>
           </div>
 
-          <!-- Fil des commentaires -->
           {% for comment in comments %}
           <article
             class="post"
@@ -259,27 +250,49 @@
                 <div class="post-header-left">
                   <a
                     href="{{ url_for('main.profile', username=comment['username']) }}"
-                    style="
-                      display: flex;
-                      gap: 6px;
-                      text-decoration: none;
-                      color: inherit;
-                    "
+                    class="comment-author-link-inline"
                   >
                     <span class="post-name">{{ comment['display_name'] }}</span>
-                    <span class="post-username"
-                      >@{{ comment['username'] }}</span
-                    >
+                    <span class="post-username">@{{ comment['username'] }}</span>
                   </a>
                   <span class="post-time">• {{ comment['created_at'] }}</span>
                 </div>
+
+                {% if comment['user_id'] == current_user['id'] %}
+                <div class="post-menu-container">
+                  <button
+                    type="button"
+                    class="post-menu-btn"
+                    data-id="comment-{{ comment['id'] }}"
+                    onclick="toggleMenu(this)"
+                  >
+                    <i class="fa-solid fa-ellipsis"></i>
+                  </button>
+
+                  <div class="post-menu" id="menu-comment-{{ comment['id'] }}">
+                    <form
+                      action="{{ url_for('main.delete_comment', comment_id=comment['id']) }}"
+                      method="POST"
+                      onsubmit="return confirm('Supprimer ce commentaire ?');"
+                    >
+                      <input
+                        type="hidden"
+                        name="csrf_token"
+                        value="{{ csrf_token() }}"
+                      />
+                      <button type="submit" class="menu-item delete">
+                        <i class="fa-regular fa-trash-can"></i> Supprimer
+                      </button>
+                    </form>
+                  </div>
+                </div>
+                {% endif %}
               </header>
 
               <p class="post-text">{{ comment['content'] }}</p>
             </div>
           </article>
           {% else %}
-          <!-- État vide -->
           <div class="empty-state">
             <p>Aucune réponse pour le moment. Soyez le premier !</p>
           </div>
@@ -288,9 +301,6 @@
       </section>
     </main>
 
-    <!-- ========== Sidebar Droite (Météo) ========== -->
-
-    <!-- ========== Sidebar Droite (Météo) ========== -->
     <nav class="sidebar-right-sommaire">
       <div class="sommaire-right-section">
         <div class="weather-card">
@@ -314,7 +324,6 @@
       </div>
     </nav>
 
-    <!-- ========== Scripts ========== -->
     <script src="{{ url_for('static', filename='javascript/menu_contextuel.js') }}"></script>
     <script src="{{ url_for('static', filename='javascript/meteo.js') }}"></script>
   </body>

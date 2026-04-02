@@ -661,3 +661,59 @@ form[action*="like"] .action-btn:hover {
 .post-avatar img {
     font-size: 0;
 }
+
+/* ===== MENU CONTEXTUEL ===== */
+
+.post-menu-container {
+    position: relative;
+}
+
+.post-menu-btn {
+    background: none;
+    border: none;
+    color: #71767b;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 5px;
+    border-radius: 50%;
+    transition: background 0.2s ease;
+}
+
+.post-menu-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.post-menu {
+    position: absolute;
+    top: 30px;
+    right: 0;
+    background: #1e1e1e;
+    border: 1px solid #333;
+    border-radius: 8px;
+    display: none;
+    flex-direction: column;
+    min-width: 150px;
+    z-index: 999;
+}
+
+.post-menu.active {
+    display: flex;
+}
+
+.menu-item {
+    padding: 10px;
+    border: none;
+    background: none;
+    color: white;
+    text-align: left;
+    cursor: pointer;
+    width: 100%;
+}
+
+.menu-item:hover {
+    background: #2a2a2a;
+}
+
+.menu-item.delete {
+    color: #ff4d4d;
+}
