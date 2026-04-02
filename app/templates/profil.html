@@ -72,11 +72,24 @@
               src="{{ url_for('static', filename='img/Avatar/' ~ user.avatar_url) if user.avatar_url and user.avatar_url != 'None' else url_for('static', filename='img/Avatar/47fef09b5e072de28b79f35d0ef4e9cc.webp') }}"
               alt="Avatar" class="profile-pdp" />
           </div>
-
+        
           {% if current_user and user.id == current_user.id %}
-          <a href="{{ url_for('main.edit_profile') }}" class="edit-btn">
-            Modifier le profil
-          </a>
+            <a href="{{ url_for('main.edit_profile') }}" class="edit-btn">
+              Modifier le profil
+            </a>
+          {% else %}
+            <form action="{{ url_for('main.follow_user', target_user_id=user['id']) }}" method="POST">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              {% if is_following %}
+                <button type="submit" class="edit-btn unfollow-btn" style="background-color: transparent; border: 1px solid #536471; color: white;">
+                  Se désabonner
+                </button>
+              {% else %}
+                <button type="submit" class="edit-btn follow-btn" style="background-color: white; color: black;">
+                  Suivre
+                </button>
+              {% endif %}
+            </form>
           {% endif %}
         </div>
 
@@ -104,8 +117,8 @@
           </div>
 
           <div class="user-stats">
-            <p><strong>4</strong> Abonnements</p>
-            <p><strong>0</strong> Abonnés</p>
+            <p><strong>{{ following_count if following_count is defined else 0 }}</strong> Abonnements</p>
+            <p><strong>{{ followers_count if followers_count is defined else 0 }}</strong> Abonnés</p>
           </div>
         </div>
       </div>
