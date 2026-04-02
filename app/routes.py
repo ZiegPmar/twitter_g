@@ -14,6 +14,16 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def get_unread_notifications_count(user_id):
+    db = get_db()
+    with db.cursor() as cursor:
+        cursor.execute("""
+            SELECT COUNT(*) AS unread_count
+            FROM notifications
+            WHERE user_id = %s AND is_read = 0
+        """, (user_id,))
+        return cursor.fetchone()["unread_count"]
+
 @bp.route("/")
 def feed():
     if 'user_id' not in session:
@@ -62,7 +72,14 @@ def feed():
             post["comments_preview"] = [dict(comment) for comment in comments_preview]
             posts.append(post)
 
-    return render_template("home.html", posts=posts, current_user=current_user)
+    unread_notifications_count = get_unread_notifications_count(current_user_id)
+
+    return render_template(
+        "home.html",
+        posts=posts,
+        current_user=current_user,
+        unread_notifications_count=unread_notifications_count
+    )
 
 #-------------------------------------------------------------
 # Ajout d'un post (Sécurisé)
@@ -112,9 +129,9 @@ def add_post():
     db.commit() 
     return redirect(request.referrer or url_for("main.feed"))
 
-#-------------------------------------------------------------
-# Système de like/unlike (Requiert CSRF protection côté HTML)
-#-------------------------------------------------------------
+#-------------------------
+# Système de like/unlike
+#-------------------------
 
 @bp.route("/like/<int:post_id>", methods=["POST"])
 def like_post(post_id):
@@ -125,10 +142,31 @@ def like_post(post_id):
     user_id = session['user_id']
 
     with db.cursor() as cursor:
-        cursor.execute("SELECT id FROM likes WHERE user_id = %s AND post_id = %s", (user_id, post_id))
-        if cursor.fetchone() is None:
-            cursor.execute("INSERT INTO likes (user_id, post_id) VALUES (%s, %s)", (user_id, post_id))
-            db.commit()
+        cursor.execute(
+            "SELECT id FROM likes WHERE user_id = %s AND post_id = %s",
+            (user_id, post_id)
+        )
+        already_liked = cursor.fetchone()
+
+        if already_liked is None:
+            cursor.execute(
+                "INSERT INTO likes (user_id, post_id) VALUES (%s, %s)",
+                (user_id, post_id)
+            )
+
+            cursor.execute(
+                "SELECT user_id FROM posts WHERE id = %s",
+                (post_id,)
+            )
+            post = cursor.fetchone()
+
+            if post and post["user_id"] != user_id:
+                cursor.execute("""
+                    INSERT INTO notifications (user_id, sender_id, post_id, reply_id, type, is_read)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                """, (post["user_id"], user_id, post_id, None, "like", 0))
+
+        db.commit()
 
     return redirect(request.referrer or url_for("main.feed"))
 
@@ -141,7 +179,10 @@ def unlike_post(post_id):
     user_id = session['user_id']
 
     with db.cursor() as cursor:
-        cursor.execute("DELETE FROM likes WHERE user_id = %s AND post_id = %s", (user_id, post_id))
+        cursor.execute(
+            "DELETE FROM likes WHERE user_id = %s AND post_id = %s",
+            (user_id, post_id)
+        )
         db.commit()
 
     return redirect(request.referrer or url_for("main.feed"))
@@ -152,15 +193,37 @@ def add_comment(post_id):
         return redirect(url_for("main.connexion"))
         
     content = request.form.get("content", "").strip()
+
     if not content or len(content) > MAX_CONTENT_LENGTH:
         return redirect(request.referrer or url_for("main.feed"))
 
     db = get_db()
+    current_user_id = session['user_id']
+
     with db.cursor() as cursor:
+        # Ajout du commentaire
         cursor.execute("""
             INSERT INTO posts (user_id, content, media_url, reply_to_post_id)
             VALUES (%s, %s, %s, %s)
-        """, (session['user_id'], content, None, post_id))
+        """, (current_user_id, content, None, post_id))
+
+        # On récupère l'id du commentaire créé
+        reply_id = cursor.lastrowid
+
+        # Récupère le propriétaire du post parent
+        cursor.execute(
+            "SELECT user_id FROM posts WHERE id = %s",
+            (post_id,)
+        )
+        parent_post = cursor.fetchone()
+
+        # Notification seulement si on ne commente pas son propre post
+        if parent_post and parent_post["user_id"] != current_user_id:
+            cursor.execute("""
+                INSERT INTO notifications (user_id, sender_id, post_id, reply_id, type, is_read)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (parent_post["user_id"], current_user_id, post_id, reply_id, "reply", 0))
+
         db.commit()
 
     return redirect(request.referrer or url_for("main.feed"))
@@ -172,7 +235,7 @@ def add_comment(post_id):
 @bp.route("/post/<int:post_id>")
 def view_post(post_id):
     db = get_db()
-    current_user_id = session.get('user_id') 
+    current_user_id = session.get('user_id')
 
     with db.cursor() as cursor:
         cursor.execute("SELECT * FROM users WHERE id = %s", (current_user_id,))
@@ -211,7 +274,15 @@ def view_post(post_id):
         """, (post_id,))
         comments = cursor.fetchall()
 
-    return render_template("view_post.html", post=post, comments=comments, current_user=current_user)
+    unread_notifications_count = get_unread_notifications_count(current_user_id)
+
+    return render_template(
+        "view_post.html",
+        post=post,
+        comments=comments,
+        current_user=current_user,
+        unread_notifications_count=unread_notifications_count
+    )
 
 @bp.route("/delete-post/<int:post_id>", methods=["POST"])
 def delete_post(post_id):
@@ -245,28 +316,23 @@ def profile(username):
     current_user_id = session['user_id']
 
     with db.cursor() as cursor:
-        # 1. Infos du profil visité
         cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
         user = cursor.fetchone()
         if user is None:
             abort(404)
 
-        # 2. Est-ce que je suis ce profil ?
-        cursor.execute("SELECT 1 FROM follows WHERE follower_id = %s AND following_id = %s", 
-                       (current_user_id, user['id']))
+        cursor.execute(
+            "SELECT 1 FROM follows WHERE follower_id = %s AND following_id = %s",
+            (current_user_id, user['id'])
+        )
         is_following = cursor.fetchone() is not None
 
-        # --- NOUVEAU : COMPTEURS DYNAMIQUES ---
-        # 3. Nombre d'abonnés (ceux qui suivent ce profil)
         cursor.execute("SELECT COUNT(*) as total FROM follows WHERE following_id = %s", (user['id'],))
         followers_count = cursor.fetchone()['total']
 
-        # 4. Nombre d'abonnements (ceux que ce profil suit)
         cursor.execute("SELECT COUNT(*) as total FROM follows WHERE follower_id = %s", (user['id'],))
         following_count = cursor.fetchone()['total']
-        # ---------------------------------------
 
-        # 5. Récupération des posts
         cursor.execute("""
             SELECT posts.*, users.username, users.display_name, users.avatar_url,
             (SELECT COUNT(*) FROM likes WHERE post_id = posts.id) as like_count,
@@ -282,22 +348,36 @@ def profile(username):
         posts = []
         for row in raw_posts:
             post = dict(row)
-            # (Ta logique de comments_preview ici...)
+
+            cursor.execute("""
+                SELECT posts.id, posts.content, posts.created_at,
+                       users.username, users.display_name, users.avatar_url
+                FROM posts
+                JOIN users ON users.id = posts.user_id
+                WHERE posts.reply_to_post_id = %s
+                ORDER BY posts.created_at DESC LIMIT 3
+            """, (post["id"],))
+            comments_preview = cursor.fetchall()
+            post["comments_preview"] = [dict(comment) for comment in comments_preview]
+
             posts.append(post)
 
-    # Récupération de l'utilisateur connecté pour la sidebar
     with db.cursor() as cursor:
         cursor.execute("SELECT * FROM users WHERE id = %s", (current_user_id,))
         logged_in_user = cursor.fetchone()
 
-    # ON ENVOIE LES COMPTEURS AU TEMPLATE
-    return render_template("profil.html", 
-                       user=user, 
-                       posts=posts, 
-                       current_user=logged_in_user, 
-                       is_following=is_following,
-                       followers_count=followers_count, # <--- ICI
-                       following_count=following_count) # <--- ICI
+    unread_notifications_count = get_unread_notifications_count(current_user_id)
+
+    return render_template(
+        "profil.html",
+        user=user,
+        posts=posts,
+        current_user=logged_in_user,
+        is_following=is_following,
+        followers_count=followers_count,
+        following_count=following_count,
+        unread_notifications_count=unread_notifications_count
+    )
 
 @bp.route("/edit-profile", methods=["GET", "POST"])
 def edit_profile():
@@ -313,7 +393,6 @@ def edit_profile():
         bio = request.form.get("bio", "").strip()
         email = request.form.get("email", "").strip()
 
-        # Validation de base
         if len(bio) > MAX_CONTENT_LENGTH or len(display_name) > 100:
             return "Entrée trop longue", 400
 
@@ -326,7 +405,6 @@ def edit_profile():
                 WHERE id = %s
             """, (display_name, bio, email, current_user_id))
             
-            # Traitement sécurisé Avatar
             if avatar_file and avatar_file.filename != "" and allowed_file(avatar_file.filename):
                 ext = avatar_file.filename.rsplit('.', 1)[-1].lower()
                 avatar_filename = secure_filename(f"{username}_avatar.{ext}")
@@ -335,7 +413,6 @@ def edit_profile():
                 avatar_file.save(os.path.join(upload_folder, avatar_filename))
                 cursor.execute("UPDATE users SET avatar_url = %s WHERE id = %s", (avatar_filename, current_user_id))
 
-            # Traitement sécurisé Bannière
             if banner_file and banner_file.filename != "" and allowed_file(banner_file.filename):
                 ext = banner_file.filename.rsplit('.', 1)[-1].lower()
                 banner_filename = secure_filename(f"{username}_banner.{ext}")
@@ -351,7 +428,13 @@ def edit_profile():
         cursor.execute("SELECT * FROM users WHERE id = %s", (current_user_id,))
         current_user = cursor.fetchone()
 
-    return render_template("edit_profil.html", current_user=current_user)
+    unread_notifications_count = get_unread_notifications_count(current_user_id)
+
+    return render_template(
+        "edit_profil.html",
+        current_user=current_user,
+        unread_notifications_count=unread_notifications_count
+    )
 
 #------------------------------
 # Système de Follow
@@ -395,11 +478,9 @@ def amis():
     user_id = session['user_id']
     
     with db.cursor() as cursor:
-        # 1. Récupérer les infos de l'utilisateur connecté
         cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
         current_user = cursor.fetchone()
 
-        # 2. Liste des Abonnements (ceux que je suis)
         cursor.execute("""
             SELECT u.id, u.username, u.display_name, u.avatar_url, u.bio
             FROM users u
@@ -408,7 +489,6 @@ def amis():
         """, (user_id,))
         abonnements = cursor.fetchall()
 
-        # 3. Liste des Abonnés (ceux qui me suivent)
         cursor.execute("""
             SELECT u.id, u.username, u.display_name, u.avatar_url, u.bio
             FROM users u
@@ -417,10 +497,15 @@ def amis():
         """, (user_id,))
         abonnes = cursor.fetchall()
 
-    return render_template("amis.html", 
-                           current_user=current_user, 
-                           abonnements=abonnements, 
-                           abonnes=abonnes)
+    unread_notifications_count = get_unread_notifications_count(user_id)
+
+    return render_template(
+        "amis.html",
+        current_user=current_user,
+        abonnements=abonnements,
+        abonnes=abonnes,
+        unread_notifications_count=unread_notifications_count
+    )
 
 #------------------------------
 # Connexion / Inscription (Hachage Actif)
@@ -476,6 +561,62 @@ def logout():
     session.clear()
     return redirect(url_for("main.connexion"))
 
-@bp.route("/test")
-def test():
-    return "ok"
+#--------------------
+#   Notifications
+#--------------------
+
+@bp.route("/notifications")
+def notifications():
+    if 'user_id' not in session:
+        return redirect(url_for("main.connexion"))
+
+    db = get_db()
+    current_user_id = session['user_id']
+
+    with db.cursor() as cursor:
+        cursor.execute(
+            "SELECT * FROM users WHERE id = %s",
+            (current_user_id,)
+        )
+        current_user = cursor.fetchone()
+
+        cursor.execute("""
+            SELECT
+                n.id,
+                n.type,
+                n.is_read,
+                n.created_at,
+                n.post_id,
+                n.reply_id,
+
+                sender.username AS sender_username,
+                sender.display_name AS sender_display_name,
+                sender.avatar_url AS sender_avatar_url,
+
+                p.content AS post_content,
+                p.media_url AS post_media_url,
+
+                reply.content AS reply_content
+
+            FROM notifications n
+            JOIN users AS sender ON sender.id = n.sender_id
+            LEFT JOIN posts AS p ON p.id = n.post_id
+            LEFT JOIN posts AS reply ON reply.id = n.reply_id
+            WHERE n.user_id = %s
+            ORDER BY n.created_at DESC
+        """, (current_user_id,))
+        notifications = cursor.fetchall()
+
+        cursor.execute("""
+            UPDATE notifications
+            SET is_read = 1
+            WHERE user_id = %s AND is_read = 0
+        """, (current_user_id,))
+        db.commit()
+
+    return render_template(
+        "notif.html",
+        current_user=current_user,
+        notifications=notifications,
+        unread_notifications_count=0
+    )

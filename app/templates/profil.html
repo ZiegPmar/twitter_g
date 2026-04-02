@@ -1,57 +1,91 @@
 <!doctype html>
 <html lang="fr">
-
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Profil de {{ user.display_name }}</title>
-    <link rel="icon" href="{{ url_for('static', filename='img/logo.webp') }}"
-      type="image/png" />
-    <link rel="stylesheet"
-      href="{{ url_for('static', filename='css/profil.css') }}" />
-    <link rel="stylesheet"
-      href="{{ url_for('static', filename='css/sidebar-left.css') }}" />
-    <link rel="stylesheet"
-      href="{{ url_for('static', filename='css/sidebar-right.css') }}" />
-    <link rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link
+      rel="icon"
+      href="{{ url_for('static', filename='img/logo.webp') }}"
+      type="image/png"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/profil.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/sidebar-left.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/sidebar-right.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
   </head>
 
   <body>
     <!-- ========== Navbar Sidebar Gauche ========== -->
     <nav class="sidebar-sommaire">
       <a href="{{ url_for('main.feed') }}" class="logo">
-        <img src="{{ url_for('static', filename='img/logo.webp') }}"
-          alt="Logo" />
+        <img
+          src="{{ url_for('static', filename='img/logo.webp') }}"
+          alt="Logo"
+        />
       </a>
 
       <div class="sommaire-section">
-        <a class="text-sidebar" href="{{ url_for('main.feed') }}"><i
-            class="fa-solid fa-house"></i> Home</a>
-        <a class="text-sidebar" href="#"><i class="fa-solid fa-user-group"></i>
-          Amis</a>
-        <a class="text-sidebar" href="#"><i class="fa-solid fa-envelope"></i>
-          Message</a>
-        <a class="text-sidebar" href="#"><i class="fa-solid fa-heart"></i>
-          Like</a>
+        <a class="text-sidebar" href="{{ url_for('main.feed') }}"
+          ><i class="fa-solid fa-house"></i> Home</a
+        >
+        <a class="text-sidebar" href="#"
+          ><i class="fa-solid fa-user-group"></i> Amis</a
+        >
+        <a class="text-sidebar" href="#"
+          ><i class="fa-solid fa-envelope"></i> Message</a
+        >
+        <a class="text-sidebar notif-sidebar-link" href="/notifications">
+          <i class="fa-solid fa-bell"></i>
+          Notifications {% if unread_notifications_count and
+          unread_notifications_count > 0 %}
+          <span class="notif-badge">
+            {% if unread_notifications_count > 99 %} 99+ {% else %} {{
+            unread_notifications_count }} {% endif %}
+          </span>
+          {% endif %}
+        </a>
       </div>
 
-      <a href="{{ url_for('main.profile', username=current_user['username']) }}"
-        class="profil-section profil-link">
+      <a
+        href="{{ url_for('main.profile', username=current_user['username']) }}"
+        class="profil-section profil-link"
+      >
         <div class="profil-avatar-link">
           <img
             src="{{ url_for('static', filename='img/Avatar/' ~ current_user['avatar_url']) if current_user['avatar_url'] and current_user['avatar_url'] != 'None' else url_for('static', filename='img/Avatar/47fef09b5e072de28b79f35d0ef4e9cc.webp') }}"
-            alt="Avatar" />
+            alt="Avatar"
+          />
         </div>
 
         <div class="profil-info">
-          <span class="profil-display-name">{{ current_user['display_name']
-            }}</span>
+          <span class="profil-display-name"
+            >{{ current_user['display_name'] }}</span
+          >
           <span class="profil-username">@{{ current_user['username'] }}</span>
         </div>
 
-        <button type="button" class="logout-btn" title="Se déconnecter"
-          onclick="event.preventDefault(); window.location.href = '/logout';">
+        <button
+          type="button"
+          class="logout-btn"
+          title="Se déconnecter"
+          onclick="
+            event.preventDefault();
+            window.location.href = '/logout';
+          "
+        >
           <i class="fa-solid fa-arrow-right-from-bracket"></i>
         </button>
       </a>
@@ -61,8 +95,9 @@
     <div class="main">
       <!-- En-tête avec bouton retour -->
       <div class="page-header">
-        <a href="javascript:history.back()"><i
-            class="fa-solid fa-arrow-left"></i></a>
+        <a href="javascript:history.back()"
+          ><i class="fa-solid fa-arrow-left"></i
+        ></a>
         <span>Profil</span>
       </div>
 
@@ -73,9 +108,10 @@
           {% if user.banner_url %}
           <img
             src="{{ url_for('static', filename='img/banniere/' + user.banner_url) }}"
-            alt="Banner" />
+            alt="Banner"
+          />
           {% else %}
-          <div style="background-color: #333; width: 100%; height: 100%;"></div>
+          <div style="background-color: #333; width: 100%; height: 100%"></div>
           {% endif %}
         </div>
 
@@ -85,7 +121,9 @@
             <div class="avatar-container">
               <img
                 src="{{ url_for('static', filename='img/Avatar/' ~ user.avatar_url) if user.avatar_url and user.avatar_url != 'None' else url_for('static', filename='img/Avatar/47fef09b5e072de28b79f35d0ef4e9cc.webp') }}"
-                alt="Avatar" class="profile-pdp" />
+                alt="Avatar"
+                class="profile-pdp"
+              />
             </div>
 
             {% if current_user and user.id == current_user.id %}
@@ -95,16 +133,31 @@
             {% else %}
             <form
               action="{{ url_for('main.follow_user', target_user_id=user['id']) }}"
-              method="POST">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              method="POST"
+            >
+              <input
+                type="hidden"
+                name="csrf_token"
+                value="{{ csrf_token() }}"
+              />
               {% if is_following %}
-              <button type="submit" class="edit-btn unfollow-btn"
-                style="background-color: transparent; border: 1px solid #536471; color: white;">
+              <button
+                type="submit"
+                class="edit-btn unfollow-btn"
+                style="
+                  background-color: transparent;
+                  border: 1px solid #536471;
+                  color: white;
+                "
+              >
                 Se désabonner
               </button>
               {% else %}
-              <button type="submit" class="edit-btn follow-btn"
-                style="background-color: white; color: black;">
+              <button
+                type="submit"
+                class="edit-btn follow-btn"
+                style="background-color: white; color: black"
+              >
                 Suivre
               </button>
               {% endif %}
@@ -126,12 +179,10 @@
 
             <div class="user-meta">
               {% set months = {'January': 'Janvier', 'February': 'Février',
-              'March': 'Mars',
-              'April': 'Avril', 'May': 'Mai', 'June': 'Juin', 'July': 'Juillet',
-              'August':
-              'Août', 'September': 'Septembre', 'October': 'Octobre',
-              'November': 'Novembre',
-              'December': 'Décembre'} %}
+              'March': 'Mars', 'April': 'Avril', 'May': 'Mai', 'June': 'Juin',
+              'July': 'Juillet', 'August': 'Août', 'September': 'Septembre',
+              'October': 'Octobre', 'November': 'Novembre', 'December':
+              'Décembre'} %}
               <span>
                 <i class="fa-regular fa-calendar-days"></i>
                 A rejoint en {{ months[user.created_at.strftime('%B')] }} {{
@@ -140,10 +191,20 @@
             </div>
 
             <div class="user-stats">
-              <p><strong>{{ following_count if following_count is defined else 0
-                  }}</strong> Abonnements</p>
-              <p><strong>{{ followers_count if followers_count is defined else 0
-                  }}</strong> Abonnés</p>
+              <p>
+                <strong
+                  >{{ following_count if following_count is defined else 0
+                  }}</strong
+                >
+                Abonnements
+              </p>
+              <p>
+                <strong
+                  >{{ followers_count if followers_count is defined else 0
+                  }}</strong
+                >
+                Abonnés
+              </p>
             </div>
           </div>
         </div>
@@ -157,14 +218,16 @@
             <div class="post-avatar">
               <img
                 src="{{ url_for('static', filename='img/Avatar/' ~ post['avatar_url']) if post['avatar_url'] and post['avatar_url'] != 'None' else url_for('static', filename='img/Avatar/47fef09b5e072de28b79f35d0ef4e9cc.webp') }}"
-                alt="Avatar" />
+                alt="Avatar"
+              />
             </div>
 
             <div class="post-body">
               <header class="post-header">
                 <div class="post-header-left">
                   <a
-                    href="{{ url_for('main.profile', username=post['username']) }}">
+                    href="{{ url_for('main.profile', username=post['username']) }}"
+                  >
                     <span class="post-name">{{ post['display_name'] }}</span>
                   </a>
                   <span class="post-username">@{{ post['username'] }}</span>
@@ -173,8 +236,11 @@
 
                 {% if post['user_id'] == current_user['id'] %}
                 <div class="post-menu-container">
-                  <button class="post-menu-btn" data-id="{{ post['id'] }}"
-                    onclick="toggleMenu(this)">
+                  <button
+                    class="post-menu-btn"
+                    data-id="{{ post['id'] }}"
+                    onclick="toggleMenu(this)"
+                  >
                     <i class="fa-solid fa-ellipsis"></i>
                   </button>
 
@@ -182,9 +248,13 @@
                     <form
                       action="{{ url_for('main.delete_post', post_id=post['id']) }}"
                       method="POST"
-                      onsubmit="return confirm('Supprimer ce post ?');">
-                      <input type="hidden" name="csrf_token"
-                        value="{{ csrf_token() }}">
+                      onsubmit="return confirm('Supprimer ce post ?');"
+                    >
+                      <input
+                        type="hidden"
+                        name="csrf_token"
+                        value="{{ csrf_token() }}"
+                      />
                       <button type="submit" class="menu-item delete">
                         <i class="fa-regular fa-trash-can"></i> Supprimer
                       </button>
@@ -197,8 +267,10 @@
                 {% endif %}
               </header>
 
-              <a href="{{ url_for('main.view_post', post_id=post['id']) }}"
-                class="post-content-link">
+              <a
+                href="{{ url_for('main.view_post', post_id=post['id']) }}"
+                class="post-content-link"
+              >
                 {% if post['media_url'] %}
                 <div class="post-img">
                   <img src="{{ post['media_url'] }}" alt="Image post" />
@@ -212,12 +284,17 @@
                 <form
                   action="{{ url_for('main.unlike_post', post_id=post['id']) }}"
                   method="POST"
-                  style="margin: 0; padding: 0; display: flex">
-                  <input type="hidden" name="csrf_token"
-                    value="{{ csrf_token() }}">
+                  style="margin: 0; padding: 0; display: flex"
+                >
+                  <input
+                    type="hidden"
+                    name="csrf_token"
+                    value="{{ csrf_token() }}"
+                  />
                   <button type="submit" class="action-btn liked">
-                    <div class="icon-wrapper"><i
-                        class="fa-solid fa-heart"></i></div>
+                    <div class="icon-wrapper">
+                      <i class="fa-solid fa-heart"></i>
+                    </div>
                     <span class="count">{{ post['like_count'] }}</span>
                   </button>
                 </form>
@@ -225,22 +302,30 @@
                 <form
                   action="{{ url_for('main.like_post', post_id=post['id']) }}"
                   method="POST"
-                  style="margin: 0; padding: 0; display: flex">
-                  <input type="hidden" name="csrf_token"
-                    value="{{ csrf_token() }}">
+                  style="margin: 0; padding: 0; display: flex"
+                >
+                  <input
+                    type="hidden"
+                    name="csrf_token"
+                    value="{{ csrf_token() }}"
+                  />
                   <button type="submit" class="action-btn">
-                    <div class="icon-wrapper"><i
-                        class="fa-regular fa-heart"></i></div>
+                    <div class="icon-wrapper">
+                      <i class="fa-regular fa-heart"></i>
+                    </div>
                     <span class="count">{{ post['like_count'] }}</span>
                   </button>
                 </form>
                 {% endif %}
 
-                <a href="{{ url_for('main.view_post', post_id=post['id']) }}"
-                  class="link-unstyled">
+                <a
+                  href="{{ url_for('main.view_post', post_id=post['id']) }}"
+                  class="link-unstyled"
+                >
                   <button type="button" class="action-btn">
-                    <div class="icon-wrapper"><i
-                        class="fa-regular fa-comment"></i></div>
+                    <div class="icon-wrapper">
+                      <i class="fa-regular fa-comment"></i>
+                    </div>
                     <span class="count">{{ post['comment_count'] }}</span>
                   </button>
                 </a>
@@ -253,10 +338,12 @@
                   <div class="comment-preview-avatar">
                     <a
                       href="{{ url_for('main.profile', username=comment['username']) }}"
-                      class="comment-author-link">
+                      class="comment-author-link"
+                    >
                       <img
                         src="{{ url_for('static', filename='img/Avatar/' ~ comment['avatar_url']) if comment['avatar_url'] and comment['avatar_url'] != 'None' else url_for('static', filename='img/Avatar/47fef09b5e072de28b79f35d0ef4e9cc.webp') }}"
-                        alt="Avatar" />
+                        alt="Avatar"
+                      />
                     </a>
                   </div>
 
@@ -264,22 +351,27 @@
                     <div class="comment-preview-header">
                       <a
                         href="{{ url_for('main.profile', username=comment['username']) }}"
-                        class="comment-author-info-link">
-                        <span class="comment-preview-name">{{
-                          comment['display_name'] }}</span>
-                        <span class="comment-preview-username">@{{
-                          comment['username'] }}</span>
+                        class="comment-author-info-link"
+                      >
+                        <span class="comment-preview-name"
+                          >{{ comment['display_name'] }}</span
+                        >
+                        <span class="comment-preview-username"
+                          >@{{ comment['username'] }}</span
+                        >
                       </a>
-                      <span class="comment-preview-time">• {{
-                        comment['created_at'] }}</span>
+                      <span class="comment-preview-time"
+                        >• {{ comment['created_at'] }}</span
+                      >
                     </div>
                     <p class="comment-preview-text">{{ comment['content'] }}</p>
                   </div>
                 </div>
-                {% endfor %}
-                {% if post['comment_count'] > 3 %}
-                <a href="{{ url_for('main.view_post', post_id=post['id']) }}"
-                  class="view-more-comments">
+                {% endfor %} {% if post['comment_count'] > 3 %}
+                <a
+                  href="{{ url_for('main.view_post', post_id=post['id']) }}"
+                  class="view-more-comments"
+                >
                   Voir les {{ post['comment_count'] }} commentaires
                 </a>
                 {% endif %}
@@ -289,18 +381,32 @@
               <form
                 action="{{ url_for('main.add_comment', post_id=post['id']) }}"
                 method="POST"
-                class="comment-form">
-                <input type="hidden" name="csrf_token"
-                  value="{{ csrf_token() }}">
-                <input type="text" name="content"
-                  placeholder="Répondre à ce post..." required />
+                class="comment-form"
+              >
+                <input
+                  type="hidden"
+                  name="csrf_token"
+                  value="{{ csrf_token() }}"
+                />
+                <input
+                  type="text"
+                  name="content"
+                  placeholder="Répondre à ce post..."
+                  required
+                />
                 <button type="submit">Commenter</button>
               </form>
             </div>
           </article>
           {% else %}
           <div
-            style="text-align: center; padding: 40px; color: #71767b; width: 100%;">
+            style="
+              text-align: center;
+              padding: 40px;
+              color: #71767b;
+              width: 100%;
+            "
+          >
             <p>Cet utilisateur n'a pas encore publié de posts.</p>
           </div>
           {% endfor %}
@@ -332,10 +438,7 @@
       </div>
     </nav>
 
-    <script
-      src="{{ url_for('static', filename='javascript/meteo.js') }}"></script>
-    <script
-      src="{{ url_for('static', filename='javascript/menu_contextuel.js') }}"></script>
-  </body> 
-
+    <script src="{{ url_for('static', filename='javascript/meteo.js') }}"></script>
+    <script src="{{ url_for('static', filename='javascript/menu_contextuel.js') }}"></script>
+  </body>
 </html>

@@ -332,3 +332,39 @@
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
     border-radius: 10px;
 }
+
+.notif-sidebar-link {
+    position: relative;
+}
+
+.notif-sidebar-link .fa-bell {
+    margin-right: 10px;
+}
+
+.notif-badge {
+    position: absolute;
+    top: 2px;
+    left: 18px;
+
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+
+    border-radius: 999px;
+    background: #f91880;
+    color: white;
+
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 2px solid #141313;
+    box-sizing: border-box;
+}
+
+
+
