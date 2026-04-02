@@ -1,0 +1,116 @@
+/* ============================================================
+   SECTION CENTRALE - PAGE AMIS (CORRIGÉ)
+   ============================================================ */
+
+   .layout {
+    display: flex;
+    justify-content: center;
+    background-color: #000;
+    /* On retire le min-height ici pour éviter que les bordures ne filent jusqu'en bas */
+}
+
+.feed {
+    width: 100%;
+    max-width: 600px;
+    /* Ajout de la bordure haute manquante */
+    border-top: 1px solid #333; 
+    border-left: 1px solid #333;
+    border-right: 1px solid #333;
+    /* La bordure basse fermera le carré quand le contenu s'arrête */
+    border-bottom: 1px solid #333;
+    margin: 0 auto;
+    background-color: #000;
+    /* Pour s'assurer que le carré ne soit pas "troué" en bas */
+    height: fit-content; 
+}
+
+/* En-tête de page */
+.page-header {
+    padding: 15px;
+    border-bottom: 1px solid #333;
+}
+
+.page-header h1 {
+    color: #fff;
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+/* ============================================================
+   STYLISATION DES TITRES DE SECTION
+   ============================================================ */
+
+.friends-section {
+    padding: 20px 15px;
+}
+
+.friends-section h2 {
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 0 0 15px 0;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #1d9bf0;
+    display: inline-block;
+}
+
+/* ============================================================
+   CARTES UTILISATEUR
+   ============================================================ */
+
+.user-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px;
+    margin-bottom: 12px;
+    border: 1px solid #333;
+    border-radius: 15px;
+    transition: background-color 0.2s ease;
+}
+
+.user-card:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.user-info-flex {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+}
+
+.user-card img {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.user-card .names {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-card .display-name {
+    color: #fff;
+    font-weight: 700;
+}
+
+.user-card .username {
+    color: #71767b;
+    font-size: 0.9rem;
+}
+
+/* Bouton Voir */
+.btn-view {
+    background-color: transparent;
+    color: #fff;
+    border: 1px solid #536471;
+    border-radius: 999px;
+    padding: 6px 16px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-decoration: none;
+}
