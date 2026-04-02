@@ -386,6 +386,42 @@ def follow_user(target_user_id):
 
     return redirect(request.referrer or url_for("main.profile", username=session['username']))
 
+@bp.route("/amis")
+def amis():
+    if 'user_id' not in session:
+        return redirect(url_for("main.connexion"))
+    
+    db = get_db()
+    user_id = session['user_id']
+    
+    with db.cursor() as cursor:
+        # 1. Récupérer les infos de l'utilisateur connecté
+        cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+        current_user = cursor.fetchone()
+
+        # 2. Liste des Abonnements (ceux que je suis)
+        cursor.execute("""
+            SELECT u.id, u.username, u.display_name, u.avatar_url, u.bio
+            FROM users u
+            JOIN follows f ON u.id = f.following_id
+            WHERE f.follower_id = %s
+        """, (user_id,))
+        abonnements = cursor.fetchall()
+
+        # 3. Liste des Abonnés (ceux qui me suivent)
+        cursor.execute("""
+            SELECT u.id, u.username, u.display_name, u.avatar_url, u.bio
+            FROM users u
+            JOIN follows f ON u.id = f.follower_id
+            WHERE f.following_id = %s
+        """, (user_id,))
+        abonnes = cursor.fetchall()
+
+    return render_template("amis.html", 
+                           current_user=current_user, 
+                           abonnements=abonnements, 
+                           abonnes=abonnes)
+
 #------------------------------
 # Connexion / Inscription (Hachage Actif)
 #------------------------------
