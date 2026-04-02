@@ -449,14 +449,24 @@ def connexion():
 def inscription():
     if request.method == 'POST':
         db = get_db()
-        # Hachage du mot de passe avant insertion
         hashed_password = generate_password_hash(request.form.get('password'))
+        
+        # Valeurs par défaut
+        default_avatar = "default_avatar.png"
+        default_banner = "default_banner.jpg" # <--- Ajout ici
+
         with db.cursor() as cursor:
-            cursor.execute(
-                "INSERT INTO users (username, display_name, email, password_hash) VALUES (%s, %s, %s, %s)",
-                (request.form.get('username'), request.form.get('display_name'), 
-                 request.form.get('email'), hashed_password)
-            )
+            cursor.execute("""
+                INSERT INTO users (username, display_name, email, password_hash, avatar_url, banner_url) 
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (
+                request.form.get('username'), 
+                request.form.get('display_name'), 
+                request.form.get('email'), 
+                hashed_password, 
+                default_avatar, 
+                default_banner # <--- Et ici
+            ))
             db.commit()
         return redirect(url_for('main.connexion'))
     return render_template('inscription.html')
