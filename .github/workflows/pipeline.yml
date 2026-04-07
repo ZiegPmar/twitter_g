@@ -1,0 +1,99 @@
+name: CI Quality and Secrets
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs: 
+  
+  # --- JOB 1 : QUALITÉ & SECRETS (Lab 1) ---
+  lint-and-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Run Ruff (Linting)
+        run: |
+          pip install ruff
+          ruff check .
+
+      - name: Gitleaks Scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: TruffleHog OSS
+        uses: trufflesecurity/trufflehog-oss-action@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+
+  # --- JOB 2 : SAST & SCA (Lab 2) ---
+  sast-and-sca:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Bandit Scan (SAST)
+        run: |
+          pip install bandit
+          bandit -r . -ll
+
+      - name: Pip-audit (SCA)
+        run: |
+          pip install pip-audit
+          pip-audit -r requirements.txt
+
+      - name: Semgrep (Challenge: Policy as Code)
+        run: |
+          pip install semgrep
+          semgrep --config .semgrep.yml .
+
+  
+  # --- JOB 3 : DOCKER BUILD & SCAN (Lab 3) ---
+  docker-security:
+    runs-on: ubuntu-latest
+    # Ce job attend que les tests de code soient finis
+    needs: [lint-and-scan, sast-and-sca] 
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # --- BONUS : SCAN PRÉ-BUILD (Analyse du Dockerfile) ---
+      - name: Run Trivy config scan (IaC)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          hide-progress: false
+          exit-code: '1' # Fail si le Dockerfile a des mauvaises pratiques
+          severity: 'HIGH,CRITICAL'
+
+      # --- OBLIGATOIRE : BUILD IMAGE ---
+      - name: Build Docker Image
+        run: docker build -t my-app:${{ github.sha }} .
+
+      # --- OBLIGATOIRE & BONUS : SCAN POST-BUILD (Vulnérabilités Image) ---
+      - name: Run Trivy image scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'my-app:${{ github.sha }}'
+          format: 'table'
+          exit-code: '1' # Fail si l'image a des vulnérabilités graves
+          severity: 'CRITICAL'

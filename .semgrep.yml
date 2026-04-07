@@ -1,0 +1,33 @@
+rules:
+  # --- CHALLENGE : INTERDIRE DEBUG=TRUE ---
+  - id: python-debug-true-check
+    patterns:
+      - pattern: "debug = True"
+    message: "ERREUR CRITIQUE : Le mode debug=True est détecté. C'est une faille de sécurité majeure en production (exposition de l'arborescence, variables d'env, etc.)."
+    severity: ERROR
+    languages: [python]
+
+  # --- CHALLENGE : INTERDIRE MD5 ---
+  - id: python-forbidden-md5
+    patterns:
+      - pattern: hashlib.md5(...)
+    message: "SÉCURITÉ : L'utilisation de MD5 est interdite car cet algorithme de hachage est vulnérable aux collisions. Utilisez SHA-256 ou plus."
+    severity: ERROR
+    languages: [python]
+
+  # --- CHALLENGE : INTERDIRE MAUVAISES PRATIQUES ---
+  # Exemple 1 : Utilisation de print au lieu d'un logger
+  - id: python-no-print-in-prod
+    patterns:
+      - pattern: print(...)
+    message: "CONSEIL : Évitez d'utiliser print() en production. Utilisez le module 'logging' pour une meilleure traçabilité."
+    severity: WARNING
+    languages: [python]
+
+  # Exemple 2 : Utilisation de shell=True dans subprocess (très dangereux)
+  - id: python-subprocess-shell-true
+    patterns:
+      - pattern: subprocess.run(..., shell=True, ...)
+    message: "DANGER : L'utilisation de shell=True permet des injections de commandes. Passez les arguments sous forme de liste."
+    severity: ERROR
+    languages: [python]
