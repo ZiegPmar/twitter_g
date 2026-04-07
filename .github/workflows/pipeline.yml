@@ -6,7 +6,8 @@ on:
   pull_request:
     branches: [ main, develop ]
 
-jobs:
+jobs: 
+  
   # --- JOB 1 : QUALITÉ & SECRETS (Lab 1) ---
   lint-and-scan:
     runs-on: ubuntu-latest
@@ -60,11 +61,12 @@ jobs:
           pip install pip-audit
           pip-audit -r requirements.txt
 
-      - name: Semgrep (Challenge: Policy as Code)
+      - name: "Semgrep (Challenge: Policy as Code)"
         run: |
           pip install semgrep
           semgrep --config .semgrep.yml .
 
+  
   # --- JOB 3 : DOCKER BUILD & SCAN (Lab 3) ---
   docker-security:
     runs-on: ubuntu-latest
@@ -74,24 +76,24 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # --- BONUS : SCAN PRÉ-BUILD ---
+      # --- BONUS : SCAN PRÉ-BUILD (Analyse du Dockerfile) ---
       - name: Run Trivy config scan (IaC)
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'config'
           hide-progress: false
-          exit-code: '1'
+          exit-code: '1' # Fail si le Dockerfile a des mauvaises pratiques
           severity: 'HIGH,CRITICAL'
 
       # --- OBLIGATOIRE : BUILD IMAGE ---
       - name: Build Docker Image
         run: docker build -t my-app:${{ github.sha }} .
 
-      # --- OBLIGATOIRE & BONUS : SCAN POST-BUILD ---
+      # --- OBLIGATOIRE & BONUS : SCAN POST-BUILD (Vulnérabilités Image) ---
       - name: Run Trivy image scan
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: 'my-app:${{ github.sha }}'
           format: 'table'
-          exit-code: '1'
+          exit-code: '1' # Fail si l'image a des vulnérabilités graves
           severity: 'CRITICAL'
