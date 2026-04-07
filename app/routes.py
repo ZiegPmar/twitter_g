@@ -668,6 +668,12 @@ def follow_user(target_user_id):
             # Si n'existe pas -> Follow
             cursor.execute("INSERT INTO follows (follower_id, following_id) VALUES (%s, %s)", 
                            (current_user_id, target_user_id))
+
+            # Notification de follow
+            cursor.execute("""
+                INSERT INTO notifications (user_id, sender_id, post_id, reply_id, type, is_read)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (target_user_id, current_user_id, None, None, "follow", 0))
         
         db.commit()
 

@@ -96,16 +96,16 @@ body {
     color: #1d9bf0;
 }
 
-.notif-left-icon .fa-user-plus {
-    color: #1d9bf0;
-}
-
 .notif-left-icon .fa-envelope {
     color: #1d9bf0;
 }
 
 .notif-left-icon .fa-bell {
     color: #8b98a5;
+}
+
+.notif-left-icon .fa-user-plus {
+    color:#43e640cf
 }
 
 .notif-main {
