@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ main, develop, pipeline ]
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs: 
   # --- JOB 1 : QUALITÉ & SECRETS (Lab 1) ---
   lint-and-scan:
