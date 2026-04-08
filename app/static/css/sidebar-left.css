@@ -9,7 +9,7 @@
     left: 0;
     top: 0;
     background: #141313;
-    border-right: 1px solid #333; 
+    border-right: 1px solid #333;
     padding: 20px;
     z-index: 100;
     display: flex;
@@ -34,10 +34,10 @@
    3. NAVIGATION PRINCIPALE
 ================================================= */
 .sommaire-section {
-    flex-grow: 1; 
+    flex-grow: 1;
     display: flex;
     flex-direction: column;
-    gap: 15px; 
+    gap: 15px;
 }
 
 .sommaire-section a {
@@ -59,9 +59,60 @@
     margin-right: 10px;
 }
 
-.text-sidebar{
+.text-sidebar {
     text-decoration: none;
     color: #cdcdcd;
+}
+
+/* =================================================
+   3.1 BADGES NOTIFICATIONS / MESSAGES
+================================================= */
+.text-sidebar.notif-sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+}
+
+.sidebar-icon-wrap {
+    position: relative;
+    width: 25px;
+    min-width: 25px;
+    height: 25px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar-icon-wrap .fa-solid {
+    width: auto;
+    margin-right: 0;
+}
+
+.notif-badge {
+    position: absolute;
+    top: -7px;
+    right: -10px;
+
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+
+    border-radius: 999px;
+    background: #f91880;
+    color: white;
+
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 2px solid #141313;
+    box-sizing: border-box;
+    z-index: 2;
 }
 
 /* =================================================
@@ -77,13 +128,13 @@
     font-weight: bold;
     cursor: pointer;
     width: 90%;
-    margin-top: auto; 
+    margin-top: auto;
     margin-bottom: 10px;
     transition: background-color 0.2s ease;
 }
 
 .sidebar-publish-btn:hover {
-    background-color: #1a8cd8; 
+    background-color: #1a8cd8;
 }
 
 /* =================================================
@@ -91,21 +142,21 @@
 ================================================= */
 .profil-section {
     display: flex;
-    align-items: center; 
+    align-items: center;
     gap: 12px;
     padding: 12px;
-    margin-top: auto; 
+    margin-top: auto;
     border-radius: 999px;
     transition: background 0.2s ease;
     cursor: pointer;
     width: 100%;
     box-sizing: border-box;
-    text-decoration: none; 
-    color: white; 
+    text-decoration: none;
+    color: white;
 }
 
 .profil-section:hover {
-    background-color: rgba(255, 255, 255, 0.1); 
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
 .profil-section img {
@@ -114,7 +165,7 @@
     border-radius: 50%;
     object-fit: cover;
     border: 1px solid #444;
-    flex-shrink: 0; 
+    flex-shrink: 0;
 }
 
 .profil-info {
@@ -130,11 +181,11 @@
     font-size: 15px;
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis; 
+    text-overflow: ellipsis;
 }
 
 .profil-username {
-    color: #8b98a5; 
+    color: #8b98a5;
     font-size: 14px;
 }
 
@@ -142,7 +193,7 @@
    6. BOUTON LOGOUT
 ================================================= */
 .logout-btn {
-    color: white; 
+    color: white;
     font-size: 18px;
     padding: 8px;
     border-radius: 50%;
@@ -150,15 +201,15 @@
     align-items: center;
     justify-content: center;
     transition: color 0.2s, background 0.2s;
-    background: transparent; 
-    border: none; 
-    text-decoration: none; 
+    background: transparent;
+    border: none;
+    text-decoration: none;
 }
 
 .logout-btn:hover {
     background-color: rgba(244, 33, 46, 0.1);
-    color: #f4212e; 
-    text-decoration: none; 
+    color: #f4212e;
+    text-decoration: none;
 }
 
 /* =================================================
@@ -292,7 +343,7 @@
 .modal-img-preview-container {
     position: relative;
     margin-bottom: 15px;
-    display: none; 
+    display: none;
 }
 
 .modal-img-preview-container img {
@@ -332,39 +383,3 @@
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
     border-radius: 10px;
 }
-
-.notif-sidebar-link {
-    position: relative;
-}
-
-.notif-sidebar-link .fa-bell {
-    margin-right: 10px;
-}
-
-.notif-badge {
-    position: absolute;
-    top: 2px;
-    left: 18px;
-
-    min-width: 16px;
-    height: 16px;
-    padding: 0 4px;
-
-    border-radius: 999px;
-    background: #f91880;
-    color: white;
-
-    font-size: 10px;
-    font-weight: 700;
-    line-height: 1;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border: 2px solid #141313;
-    box-sizing: border-box;
-}
-
-
-

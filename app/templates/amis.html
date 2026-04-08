@@ -1,124 +1,96 @@
-<!doctype html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mes Amis - {{ current_user.display_name }}</title>
-  <link rel="icon" href="{{ url_for('static', filename='img/logo.webp') }}" type="image/png" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar-left.css') }}" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar-right.css') }}" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/profil.css') }}" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/amis.css') }}" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <style>
-    .friends-section { padding: 20px; border-bottom: 1px solid #333; }
-    .friends-section h2 { color: white; margin-bottom: 20px; font-size: 1.2rem; border-bottom: 2px solid #1d9bf0; display: inline-block; padding-bottom: 5px; }
-    .user-card { display: flex; align-items: center; justify-content: space-between; padding: 15px; border-radius: 15px; transition: background 0.2s; margin-bottom: 10px; border: 1px solid #333; }
-    .user-card:hover { background: rgba(255, 255, 255, 0.05); }
-    .user-info-flex { display: flex; align-items: center; gap: 15px; text-decoration: none; color: white; }
-    .user-card img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; }
-    .user-card .names { display: flex; flex-direction: column; }
-    .user-card .display-name { font-weight: bold; }
-    .user-card .username { color: #71767b; font-size: 0.9rem; }
-    .empty-msg { color: #71767b; font-style: italic; padding: 10px 0; }
-  </style>
-</head>
+{% extends "base.html" %}
 
-<body>
-  <nav class="sidebar-sommaire">
-    <a href="{{ url_for('main.feed') }}" class="logo">
-      <img src="{{ url_for('static', filename='img/logo.webp') }}" alt="Logo" />
-    </a>
-    <div class="sommaire-section">
-      <a class="text-sidebar" href="{{ url_for('main.feed') }}"><i class="fa-solid fa-house"></i> Home</a>
-      <a class="text-sidebar active" href="{{ url_for('main.amis') }}"><i class="fa-solid fa-user-group"></i> Amis</a>
-      <a class="text-sidebar" href="#"><i class="fa-solid fa-envelope"></i> Message</a>
-      <a class="text-sidebar" href="#"><i class="fa-solid fa-heart"></i> Like</a>
+{% block title %}Mes Amis - {{ current_user.display_name }}{% endblock %}
+
+{% block extra_css %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/home.css') }}" />
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/profil.css') }}" />
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/amis.css') }}" />
+{% endblock %}
+
+{% block extra_head %}
+<style>
+  .friends-section { padding: 20px; border-bottom: 1px solid #333; }
+  .friends-section h2 { color: white; margin-bottom: 20px; font-size: 1.2rem; border-bottom: 2px solid #1d9bf0; display: inline-block; padding-bottom: 5px; }
+  .user-card { display: flex; align-items: center; justify-content: space-between; padding: 15px; border-radius: 15px; transition: background 0.2s; margin-bottom: 10px; border: 1px solid #333; }
+  .user-card:hover { background: rgba(255, 255, 255, 0.05); }
+  .user-info-flex { display: flex; align-items: center; gap: 15px; text-decoration: none; color: white; }
+  .user-card img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; }
+  .user-card .names { display: flex; flex-direction: column; }
+  .user-card .display-name { font-weight: bold; }
+  .user-card .username { color: #71767b; font-size: 0.9rem; }
+  .empty-msg { color: #71767b; font-style: italic; padding: 10px 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="layout">
+  <section class="feed">
+    <div class="page-header" style="padding: 15px; border-bottom: 1px solid #333;">
+      <h1 style="color: white; font-size: 1.5rem;">Réseau</h1>
     </div>
 
-    <a href="{{ url_for('main.profile', username=current_user['username']) }}" class="profil-section profil-link">
-      <div class="profil-avatar-link">
-        <img src="{{ url_for('static', filename='img/Avatar/' ~ current_user['avatar_url']) if current_user['avatar_url'] and current_user['avatar_url'] != 'None' else url_for('static', filename='img/Avatar/47fef09b5e072de28b79f35d0ef4e9cc.webp') }}" alt="Avatar" />
-      </div>
-      <div class="profil-info">
-        <span class="profil-display-name">{{ current_user['display_name'] }}</span>
-        <span class="profil-username">@{{ current_user['username'] }}</span>
-      </div>
-    </a>
-  </nav>
-
-  <main class="layout">
-    <section class="feed">
-      <div class="page-header" style="padding: 15px; border-bottom: 1px solid #333;">
-        <h1 style="color: white; font-size: 1.5rem;">Réseau</h1>
-      </div>
-
-      <div class="friends-section">
-        <h2>Mes Abonnements ({{ abonnements|length }})</h2>
-        {% if abonnements %}
-          {% for user in abonnements %}
-            <div class="user-card">
-              <a href="{{ url_for('main.profile', username=user.username) }}" class="user-info-flex">
-                <img src="{{ url_for('static', filename='img/Avatar/' ~ user.avatar_url) if user.avatar_url and user.avatar_url != 'None' else url_for('static', filename='img/Avatar/47fef09b5e072de28b79f35d0ef4e9cc.webp') }}" alt="Avatar">
-                <div class="names">
-                  <span class="display-name">{{ user.display_name }}</span>
-                  <span class="username">@{{ user.username }}</span>
-                </div>
-              </a>
-              <a href="{{ url_for('main.profile', username=user.username) }}" class="edit-btn" style="text-decoration:none; font-size: 0.8rem; padding: 5px 15px;">Voir</a>
+    <div class="friends-section">
+      <h2>Mes Abonnements ({{ abonnements|length }})</h2>
+      {% if abonnements %}
+        {% for user in abonnements %}
+        <div class="user-card">
+          <a href="{{ url_for('main.profile', username=user.username) }}" class="user-info-flex">
+            <img
+              src="{{ url_for('static', filename='img/Avatar/' ~ user.avatar_url) if user.avatar_url and user.avatar_url != 'None' else url_for('static', filename='img/Avatar/47fef09b5e072de28b79f35d0ef4e9cc.webp') }}"
+              alt="Avatar">
+            <div class="names">
+              <span class="display-name">{{ user.display_name }}</span>
+              <span class="username">@{{ user.username }}</span>
             </div>
-          {% endfor %}
-        {% else %}
-          <p class="empty-msg">Vous ne suivez personne pour le moment.</p>
-        {% endif %}
-      </div>
+          </a>
 
-      <div class="friends-section">
-        <h2>Mes Abonnés ({{ abonnes|length }})</h2>
-        {% if abonnes %}
-          {% for user in abonnes %}
-            <div class="user-card">
-              <a href="{{ url_for('main.profile', username=user.username) }}" class="user-info-flex">
-                <img src="{{ url_for('static', filename='img/Avatar/' ~ user.avatar_url) if user.avatar_url and user.avatar_url != 'None' else url_for('static', filename='img/Avatar/47fef09b5e072de28b79f35d0ef4e9cc.webp') }}" alt="Avatar">
-                <div class="names">
-                  <span class="display-name">{{ user.display_name }}</span>
-                  <span class="username">@{{ user.username }}</span>
-                </div>
-              </a>
-              <a href="{{ url_for('main.profile', username=user.username) }}" class="edit-btn" style="text-decoration:none; font-size: 0.8rem; padding: 5px 15px;">Voir</a>
-            </div>
-          {% endfor %}
-        {% else %}
-          <p class="empty-msg">Personne ne vous suit encore.</p>
-        {% endif %}
-      </div>
-    </section>
-  </main>
-
-  <nav class="sidebar-right-sommaire">
-    <div class="sommaire-right-section">
-      <div class="weather-card">
-        <div class="weather-header">
-          <span class="city">Lyon</span>
-          <span class="date" id="current-date">Aujourd'hui</span>
+          <a
+            href="{{ url_for('main.profile', username=user.username) }}"
+            class="edit-btn"
+            style="text-decoration:none; font-size: 0.8rem; padding: 5px 15px;">
+            Voir
+          </a>
         </div>
-        <div class="weather-main">
-          <div class="temp-container">
-            <span id="temp-affichage">--</span><span class="unit">°C</span>
-          </div>
-        </div>
-        <div class="weather-icon">☁️</div>
-        <div class="weather-details">
-          <div class="detail-item">
-            <span class="label">VENT</span>
-            <span id="vent-affichage">-- km/h</span>
-          </div>
-        </div>
-      </div>
+        {% endfor %}
+      {% else %}
+      <p class="empty-msg">Vous ne suivez personne pour le moment.</p>
+      {% endif %}
     </div>
-  </nav>
 
-  <script src="{{ url_for('static', filename='javascript/meteo.js') }}"></script>
-</body>
-</html>
+    <div class="friends-section">
+      <h2>Mes Abonnés ({{ abonnes|length }})</h2>
+      {% if abonnes %}
+        {% for user in abonnes %}
+        <div class="user-card">
+          <a href="{{ url_for('main.profile', username=user.username) }}" class="user-info-flex">
+            <img
+              src="{{ url_for('static', filename='img/Avatar/' ~ user.avatar_url) if user.avatar_url and user.avatar_url != 'None' else url_for('static', filename='img/Avatar/47fef09b5e072de28b79f35d0ef4e9cc.webp') }}"
+              alt="Avatar">
+            <div class="names">
+              <span class="display-name">{{ user.display_name }}</span>
+              <span class="username">@{{ user.username }}</span>
+            </div>
+          </a>
+
+          <a
+            href="{{ url_for('main.profile', username=user.username) }}"
+            class="edit-btn"
+            style="text-decoration:none; font-size: 0.8rem; padding: 5px 15px;">
+            Voir
+          </a>
+        </div>
+        {% endfor %}
+      {% else %}
+      <p class="empty-msg">Personne ne vous suit encore.</p>
+      {% endif %}
+    </div>
+  </section>
+</main>
+{% endblock %}
