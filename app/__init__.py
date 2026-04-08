@@ -1,27 +1,27 @@
-import os
 from flask import Flask
 from flask_wtf.csrf import CSRFProtect
 from flask_talisman import Talisman
+import os # Ajouté pour la bonne pratique des clés secrètes
 
 def create_app():
     app = Flask(__name__)
 
-    # 1. CLÉ SECRÈTE (Indispensable pour CSRF et Sessions)
-    # En production, utilise une variable d'environnement : os.environ.get('SECRET_KEY')
-    app.config['SECRET_KEY'] = 'h4ufhuzehphduhs144fhuehôùsgdfpieh44vsdph5'
+    # 1. CLÉ SECRÈTE
+    # On utilise une valeur par défaut pour le Lab, mais prêt pour os.environ
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'h4ufhuzehphduhs144fhuehôùsgdfpieh44vsdph5')
 
     # 2. ACTIVATION DE LA PROTECTION CSRF (Faille 4.1)
-    csrf = CSRFProtect(app)
+    # Correction Ruff : On initialise directement sans assignation de variable inutilisée
+    CSRFProtect(app)
 
     # 3. SÉCURISATION DES SESSIONS ET COOKIES (Faille 6.3)
     app.config.update(
         SESSION_COOKIE_SECURE=False,  # Mets à True si tu utilises HTTPS
-        SESSION_COOKIE_HTTPONLY=True, # Empêche le vol de session via JS (XSS)
-        SESSION_COOKIE_SAMESITE='Lax', # Protection supplémentaire contre CSRF
+        SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SAMESITE='Lax',
     )
 
-    # 4. EN-TÊTES DE SÉCURITÉ : CSP, CLICKJACKING, HSTS (Failles 4.2, 4.4, 6.3)
-    # Flask-Talisman configure tout ça d'un coup
+    # 4. EN-TÊTES DE SÉCURITÉ : CSP, CLICKJACKING, HSTS
     csp = {
         'default-src': "'self'",
         'script-src': [
@@ -39,8 +39,8 @@ def create_app():
         ],
         'connect-src': [
             "'self'",
-            "https://api.open-meteo.com", # <--- LE LIEN DE TON FETCH
-            "https://cdn.jsdelivr.net"     # Pour les données des Emojis
+            "https://api.open-meteo.com",
+            "https://cdn.jsdelivr.net"
         ],
         'font-src': [
             "'self'",
@@ -53,7 +53,7 @@ def create_app():
             "https://openweathermap.org"
         ]
     }
-    Talisman(app, content_security_policy=csp, force_https=False) # force_https=True en prod
+    Talisman(app, content_security_policy=csp, force_https=False)
 
     from . import routes
     app.register_blueprint(routes.bp)

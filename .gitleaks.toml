@@ -1,0 +1,17 @@
+# Configuration personnalisée pour le Lab 1
+title = "Custom Gitleaks Rules for Lab"
+
+[[rules]]
+    id = "custom-company-api-key"
+    description = "Détection d'une clé API fictive formatée (ex: MYCORP-12345-ABCDE)"
+    regex = '''MYCORP-[0-5]{5}-[A-Z]{5}'''
+    keywords = [
+        "mycorp"
+    ]
+
+[allowlist]
+    description = "Autoriser certains fichiers ou chemins si besoin"
+    paths = [
+        '''node_modules''',
+        '''.gitleaks.toml'''
+    ]
