@@ -1,25 +1,34 @@
+/* =================================================
+   1. BASE & LAYOUT PRINCIPAL
+================================================= */
 body {
     margin: 0;
     background-color: #141313;
+    color: white;
     font-family: Arial, sans-serif;
 }
 
 .main {
-    width: 100%;
-    max-width: 950px;
-    margin: 0 auto;
+    width: auto;
+    max-width: 1200 px;
+    margin-left: 260px;
+    margin-right: 260px;
     min-height: 100vh;
-    border-left: 1px solid #2a2a2a;
-    border-right: 1px solid #2a2a2a;
+    border-left: 1px solid #333;
+    border-right: 1px solid #333;
     background: #141313;
+    box-sizing: border-box;
 }
 
+/* =================================================
+   2. HEADER DE PAGE
+================================================= */
 .page-header {
     display: flex;
     align-items: center;
     gap: 18px;
     padding: 16px 20px;
-    border-bottom: 1px solid #2a2a2a;
+    border-bottom: 1px solid #333;
     background: #141313;
     color: white;
     position: sticky;
@@ -48,6 +57,9 @@ body {
     font-weight: 700;
 }
 
+/* =================================================
+   3. LISTE DES NOTIFICATIONS
+================================================= */
 .notif-list {
     display: flex;
     flex-direction: column;
@@ -62,7 +74,7 @@ body {
     display: flex;
     gap: 14px;
     padding: 16px 18px;
-    border-bottom: 1px solid #2a2a2a;
+    border-bottom: 1px solid #333;
     background: #141313;
     color: white;
     transition: background-color 0.2s ease;
@@ -76,6 +88,9 @@ body {
     background: rgba(29, 155, 240, 0.05);
 }
 
+/* =================================================
+   4. ICÔNE GAUCHE
+================================================= */
 .notif-left-icon {
     width: 22px;
     display: flex;
@@ -105,9 +120,12 @@ body {
 }
 
 .notif-left-icon .fa-user-plus {
-    color:#43e640cf
+    color: #43e640cf;
 }
 
+/* =================================================
+   5. CONTENU PRINCIPAL
+================================================= */
 .notif-main {
     flex: 1;
     min-width: 0;
@@ -152,12 +170,24 @@ body {
     font-weight: 400;
 }
 
+/* =================================================
+   6. CONTENUS DE PRÉVISUALISATION
+================================================= */
 .notif-reply-text {
     margin: 6px 0 10px 0;
     font-size: 16px;
     line-height: 1.45;
     color: #ffffff;
     font-weight: 500;
+    word-break: break-word;
+}
+
+.notif-message-preview {
+    margin: 6px 0 0;
+    color: #8b98a5;
+    font-size: 14px;
+    font-style: italic;
+    line-height: 1.4;
     word-break: break-word;
 }
 
@@ -169,6 +199,9 @@ body {
     word-break: break-word;
 }
 
+/* =================================================
+   7. MINIATURE POST
+================================================= */
 .notif-thumb {
     flex-shrink: 0;
 }
@@ -181,16 +214,37 @@ body {
     display: block;
 }
 
+/* =================================================
+   8. ÉTAT VIDE
+================================================= */
 .notif-empty {
     padding: 40px 20px;
     text-align: center;
     color: #8b98a5;
 }
 
-@media (max-width: 900px) {
+/* =================================================
+   9. RESPONSIVE
+================================================= */
+@media (max-width: 1400px) {
     .main {
-        border-left: none;
+        margin-right: 0;
+    }
+}
+
+@media (max-width: 980px) {
+    .main {
+        margin-left: 240px;
+        margin-right: 0;
         border-right: none;
+    }
+}
+
+@media (max-width: 760px) {
+    .main {
+        margin-left: 0;
+        border-left: none;
+        min-height: 100vh;
     }
 }
 
@@ -223,7 +277,8 @@ body {
     }
 
     .notif-reply-text,
-    .notif-post-preview {
+    .notif-post-preview,
+    .notif-message-preview {
         font-size: 14px;
     }
 }
