@@ -1,4 +1,3 @@
-import os
 from flask import Flask
 from flask_wtf.csrf import CSRFProtect
 from flask_talisman import Talisman
