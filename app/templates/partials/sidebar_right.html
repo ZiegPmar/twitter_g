@@ -1,25 +1,35 @@
 <nav class="sidebar-right-sommaire">
   <div class="sommaire-right-section">
+    
     <div class="weather-card">
       <div class="weather-header">
         <span class="city">Lyon</span>
         <span class="date" id="current-date">Aujourd'hui</span>
       </div>
-
       <div class="weather-main">
         <div class="temp-container">
-          <span id="temp-affichage">--</span><span class="unit">°C</span>
+          <span id="temp-affichage">18</span><span class="unit">°C</span>
         </div>
       </div>
-
       <div class="weather-icon">☁️</div>
-
       <div class="weather-details">
         <div class="detail-item">
           <span class="label">VENT</span>
-          <span id="vent-affichage">-- km/h</span>
+          <span id="vent-affichage">12 km/h</span>
         </div>
       </div>
     </div>
+
+    <div class="sidebar-image-container" id="image-container">
+      <button class="close-btn" id="close-image" title="Fermer">&times;</button>
+      <img 
+        src="../../static/img/Guardia_Strip.png" 
+        alt="Image interactive" 
+        class="sidebar-image" 
+        id="sidebar-img"
+      >
+    </div>
+
   </div>
 </nav>
+<script src="../../static/javascript/fuck.js"></script>
