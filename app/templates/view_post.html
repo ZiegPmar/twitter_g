@@ -64,7 +64,7 @@
                 </form>
                 {% endif %}
 
-                <button type="button" class="menu-item">
+                <button type="button" class="menu-item js-share-btn">
                   <i class="fa-solid fa-share"></i> Partager
                 </button>
               </div>
@@ -215,4 +215,5 @@
 
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='javascript/menu_contextuel.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/partage.js') }}"></script>
 {% endblock %}
