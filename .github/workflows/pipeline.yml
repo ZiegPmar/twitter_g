@@ -112,10 +112,11 @@ jobs:
           sleep 10 
 
       # 2. DAST avec Nikto (Obligatoire)
-      - name: Run Nikto Scan
-        run: |
-          docker run --rm --network="host" sullo/nikto -h http://localhost:8080
-        continue-on-error: true
+
+      - name: Nikto Scan Action
+        uses: r some-actions/nikto@master # Il existe plusieurs versions, mais le docker run reste le plus formateur pour ton lab
+        with:
+          target: http://localhost:8080
 
       # 3. Connexion à DockerHub
       - name: Login to DockerHub
