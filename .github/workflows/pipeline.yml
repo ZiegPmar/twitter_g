@@ -111,12 +111,12 @@ jobs:
           docker run -d -p 8080:8080 --name webapp twitter_g:test
           sleep 10 
 
-      # 2. DAST avec Nikto (Obligatoire)
-
-      - name: Nikto Scan Action
-        uses: r some-actions/nikto@master # Il existe plusieurs versions, mais le docker run reste le plus formateur pour ton lab
-        with:
-          target: http://localhost:8080
+      # 2. DAST avec Nikto (Version officielle stable)
+      - name: Run Nikto Scan
+        run: |
+          docker pull citizenstig/nikto
+          docker run --rm --network="host" citizenstig/nikto -h http://localhost:8080
+        continue-on-error: false
 
       # 3. Connexion à DockerHub
       - name: Login to DockerHub
