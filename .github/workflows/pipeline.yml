@@ -116,7 +116,7 @@ jobs:
       - name: Run Nikto Scan
         run: |
           # On utilise l'option -Tuning x pour accélérer et on cible localhost:8000
-          docker run --rm --network="host" kalilinux/kali-rolling /bin/bash -c "apt-get update && apt-get install -y nikto && nikto -h http://localhost:8000 -Tuning x"
+          docker run --rm --network="host" kalilinux/kali-rolling /bin/bash -c "apt-get update && apt-get install -y nikto && nikto -h http://127.0.0.1:8000/ -Tuning x"
         continue-on-error: true
 
       # 3. Connexion à DockerHub
