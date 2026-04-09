@@ -115,8 +115,8 @@ jobs:
       - name: Run Nikto Scan
         run: |
           # On utilise Kali qui contient nikto par défaut
-          docker run --rm --network="host" kalilinux/kali-rolling /bin/bash -c "apt-get update && apt-get install -y nikto && nikto -h http://localhost:8080"
-        continue-on-error: true
+          docker run --rm --network="host" kalilinux/kali-rolling /bin/bash -c "apt-get update && apt-get install -y nikto && nikto -h http://localhost:8000"
+        continue-on-error: false
 
       # 3. Connexion à DockerHub
       - name: Login to DockerHub
