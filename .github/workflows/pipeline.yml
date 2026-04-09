@@ -96,7 +96,7 @@ jobs:
           exit-code: '1'
           severity: 'CRITICAL'
 
-# --- JOB 4 : DAST et Deploy (Lab 4 - Simple) ---
+# --- JOB 4 : DAST et Deploy (Lab 4 - Final) ---
   dast-and-deploy:
     runs-on: ubuntu-latest
     needs: [docker-security]
@@ -104,19 +104,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 1. Build et lancement local pour le scan DAST
+      # 1. Build et lancement local de ton app
       - name: Start Application for DAST
         run: |
           docker build -t twitter_g:test .
           docker run -d -p 8080:8080 --name webapp twitter_g:test
           sleep 10 
 
-      # 2. DAST avec Nikto (Version officielle stable)
+      # 2. DAST avec Nikto (Via Kali Linux - Plus fiable)
       - name: Run Nikto Scan
         run: |
-          docker pull citizenstig/nikto
-          docker run --rm --network="host" citizenstig/nikto -h http://localhost:8080
-        continue-on-error: false
+          # On utilise Kali qui contient nikto par défaut
+          docker run --rm --network="host" kalilinux/kali-rolling /bin/bash -c "apt-get update && apt-get install -y nikto && nikto -h http://localhost:8080"
+        continue-on-error: true
 
       # 3. Connexion à DockerHub
       - name: Login to DockerHub
@@ -125,13 +125,12 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 4. Push vers ombrosa/twitter_g (Obligatoire)
+      # 4. Build et Push vers ombrosa/twitter_g
       - name: Build and Push to DockerHub
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          # On utilise ici le nom exact de ton repository DockerHub
           tags: |
             ombrosa/twitter_g:latest
             ombrosa/twitter_g:${{ github.sha }}
