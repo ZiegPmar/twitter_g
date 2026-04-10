@@ -112,17 +112,16 @@ jobs:
           docker run -d --name webapp twitter_g:test
           sleep 15
 
-      # 2. BONUS : Remplacer Nikto par Wapiti
+# 2. BONUS : Wapiti (Image alternative stable)
       - name: Run Wapiti Scan
         run: |
-          # Récupérer l'IP pour être sûr que Wapiti voit l'app
           APP_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' webapp)
           mkdir results
           
-          # Scan Wapiti (génère un rapport HTML)
+          # On change l'image pour coolacid/wapiti qui est plus fiable
           docker run --rm -v $(pwd)/results:/results \
-          vaimu/wapiti wapiti -u http://$APP_IP:8000 -f html -o /results/wapiti_report.html
-        continue-on-error: true
+          coolacid/wapiti -u http://$APP_IP:8000 -f html -o /results/wapiti_report.html
+        continue-on-error: false
 
       # 3. BONUS : Exporter le résultat avec un artefact
       - name: Upload Wapiti Report
