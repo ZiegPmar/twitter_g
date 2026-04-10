@@ -105,11 +105,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 1. BONUS : Gestion de docker-compose dans la pipeline
+# 1. BONUS : Gestion de docker-compose (Version V2)
       - name: Start services with Docker Compose
         run: |
-          docker-compose up -d
-          sleep 20 # On laisse un peu de temps à l'app et ses services (DB, etc.)
+          docker compose up -d
+          sleep 20
 
       # 2. BONUS : Remplacer Nikto par Wapiti
       - name: Run Wapiti Scan
