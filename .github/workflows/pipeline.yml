@@ -163,13 +163,30 @@ jobs:
           sudo chown -R 1000:1000 $(pwd)
           sudo chmod -R 777 $(pwd)
 
+      # --- CHALLENGE : OWASP ZAP ---
       - name: Scan OWASP ZAP
         id: zap
-        uses: zaproxy/action-baseline@v0.12.0
+        run: |
+          # 1. On recupere l'IP de l'application
+          APP_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' webapp)
+          echo "Cible ZAP : http://$APP_IP:8000"
+          
+          # 2. On cree le dossier de rapport avec les droits full
+          mkdir -p $(pwd)/zap/wrk
+          chmod -R 777 $(pwd)/zap/wrk
+          
+          # 3. On lance ZAP manuellement en mode root pour eviter tout conflit
+          docker run --rm -v $(pwd)/zap/wrk:/zap/wrk/:rw -u root \
+          ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
+          -t http://$APP_IP:8000 -g gen.conf -r report.html
+        continue-on-error: false
+
+      # Exportation manuelle du rapport ZAP (puisqu'on ne passe plus par l'action officielle)
+      - name: Upload Artefact ZAP
+        uses: actions/upload-artifact@v4
         with:
-          target: 'http://localhost:8000'
-          artifact_name: 'Rapport-ZAP'
-        continue-on-error: true
+          name: Rapport-ZAP
+          path: zap/wrk/report.html
 
       - name: Upload Artefact Wapiti
         uses: actions/upload-artifact@v4
