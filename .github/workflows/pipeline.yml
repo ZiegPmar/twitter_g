@@ -97,7 +97,7 @@ jobs:
           severity: 'CRITICAL'
 
 
-# --- JOB 4 : DAST et Deploy  ---
+# --- JOB 4 : DAST et Deploy (Lab 4 - Bonus sans Compose) ---
   dast-and-deploy:
     runs-on: ubuntu-latest
     needs: [docker-security]
@@ -105,21 +105,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-# 1. BONUS : Gestion de docker-compose (Version V2)
-      - name: Start services with Docker Compose
+      # 1. Lancement de l'app (On reste sur du Docker classique)
+      - name: Start Application
         run: |
-          docker compose up -d
-          sleep 20
+          docker build -t twitter_g:test .
+          docker run -d --name webapp twitter_g:test
+          sleep 15
 
       # 2. BONUS : Remplacer Nikto par Wapiti
       - name: Run Wapiti Scan
         run: |
-          # Créer un dossier pour les résultats
+          # Récupérer l'IP pour être sûr que Wapiti voit l'app
+          APP_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' webapp)
           mkdir results
-          # On lance Wapiti contre le service défini dans docker-compose (généralement sur le port 8000 ou 8080)
-          # -f html : format du rapport / -o : dossier de sortie
-          docker run --rm --network="host" -v $(pwd)/results:/results \
-          vaimu/wapiti wapiti -u http://localhost:8000 -f html -o /results/wapiti_report.html
+          
+          # Scan Wapiti (génère un rapport HTML)
+          docker run --rm -v $(pwd)/results:/results \
+          vaimu/wapiti wapiti -u http://$APP_IP:8000 -f html -o /results/wapiti_report.html
         continue-on-error: true
 
       # 3. BONUS : Exporter le résultat avec un artefact
@@ -136,7 +138,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 5. Push vers DockerHub
+      # 5. Push vers ombrosa/twitter_g
       - name: Build and Push to DockerHub
         uses: docker/build-push-action@v5
         with:
