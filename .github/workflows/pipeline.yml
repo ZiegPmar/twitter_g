@@ -137,63 +137,51 @@ jobs:
 
       - name: Lancement Application
         run: |
+          # 1. Créer un réseau Docker pour que les conteneurs se voient
+          docker network create zap-network
+          
+          # 2. Build et Run l'app dans ce réseau avec un alias
           docker build -t twitter_g:test .
-          docker run -d -p 8000:8000 --name webapp twitter_g:test
+          docker run -d --name webapp --network zap-network -p 8000:8000 twitter_g:test
+          
+          # Attendre que l'app soit prête
           sleep 15 
 
       - name: Scan Wapiti
         id: wapiti
         run: |
           pip install wapiti3
-          mkdir results
+          mkdir -p results
+          # Wapiti tourne sur l'hôte, donc il utilise localhost
           wapiti -u http://localhost:8000 -f html -o results/wapiti_report.html
-        continue-on-error: false
+        continue-on-error: true
 
-      # --- CHALLENGE : OWASP ZAP ---
-      - name: Creation du repertoire de travail ZAP
-        run: |
-          mkdir -p zap/wrk
-          chmod -R 777 zap/wrk
-
-      # --- CHALLENGE : OWASP ZAP ---
-      - name: Correction des droits pour ZAP
-        run: |
-          # On cree le dossier attendu et on donne les droits full
-          sudo mkdir -p $(pwd)/zap/wrk
-          sudo chown -R 1000:1000 $(pwd)
-          sudo chmod -R 777 $(pwd)
-
-     # --- CHALLENGE : OWASP ZAP ---
       - name: Scan OWASP ZAP
         id: zap
         run: |
-          # 1. Utiliser localhost plutôt que l'IP interne (plus fiable dans GH Actions)
-          # Puisque le container webapp a été lancé avec -p 8000:8000
-          TARGET_URL="http://localhost:8000"
-          echo "Cible ZAP : $TARGET_URL"
-          
-          # 2. Création propre du dossier avec sudo pour éviter le "Operation not permitted"
+          # 1. Préparation propre du dossier
           sudo mkdir -p $(pwd)/zap/wrk
           sudo chmod -R 777 $(pwd)/zap/wrk
           
-          # 3. Lancement de ZAP en utilisant le réseau de l'hôte (--network="host")
-          # Cela permet au container ZAP d'accéder à 'localhost:8000'
+          # 2. Exécution de ZAP dans le MÊME réseau
+          # On cible 'webapp' (le nom du conteneur) au lieu de localhost
           docker run --rm \
-            --network="host" \
+            --network zap-network \
             -v $(pwd)/zap/wrk:/zap/wrk/:rw \
             -u root \
             ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
-            -t $TARGET_URL -g gen.conf -r report.html
-        continue-on-error: true # Recommandé pour ZAP car il sort souvent en erreur s'il trouve des alertes
+            -t http://webapp:8000 -g gen.conf -r report.html
+        continue-on-error: true
 
-      # Exportation manuelle du rapport ZAP (puisqu'on ne passe plus par l'action officielle)
       - name: Upload Artefact ZAP
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: Rapport-ZAP
           path: zap/wrk/report.html
 
       - name: Upload Artefact Wapiti
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: Rapport-Wapiti
@@ -221,6 +209,6 @@ jobs:
           echo "## Recapitulatif DAST et Deploiement" >> $GITHUB_STEP_SUMMARY
           echo "| Action | Statut |" >> $GITHUB_STEP_SUMMARY
           echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
-          echo "| DAST (Wapiti) | ${{ steps.wapiti.outcome == 'success' && 'Aucune faille majeure' || 'Alertes detectees' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| OWASP ZAP (Challenge) | ${{ steps.zap.outcome == 'success' && 'Termine' || 'Failles detectees' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Deploiement DockerHub | ${{ steps.push.outcome == 'success' && 'Reussi' || 'Echec' }} |" >> $GITHUB_STEP_SUMMARY 
+          echo "| DAST (Wapiti) | ${{ steps.wapiti.outcome == 'success' && 'Succès' || 'Alertes' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| OWASP ZAP | ${{ steps.zap.outcome == 'success' && 'Succès' || 'Alertes' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Deploiement | ${{ steps.push.outcome == 'success' && 'Reussi' || 'Echec' }} |" >> $GITHUB_STEP_SUMMARY
