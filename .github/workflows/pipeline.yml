@@ -130,7 +130,7 @@ jobs:
   # --- JOB 5 : Trivy Image ---
   trivy-image:
     runs-on: ubuntu-latest
-    needs: [trivy-config]
+    needs: [lint-and-scan, sast-analysis, sca-analysis]
     steps:
       - name: Checkout du code
         uses: actions/checkout@v4
