@@ -149,7 +149,16 @@ jobs:
           wapiti -u http://localhost:8000 -f html -o results/wapiti_report.html
         continue-on-error: false
 
-      - name: Upload Artefact
+      # --- CHALLENGE : OWASP ZAP ---
+      - name: Scan OWASP ZAP
+        id: zap
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: 'http://localhost:8000'
+          artifact_name: 'Rapport-ZAP'
+        continue-on-error: false
+
+      - name: Upload Artefact Wapiti
         uses: actions/upload-artifact@v4
         with:
           name: Rapport-Wapiti
@@ -178,4 +187,5 @@ jobs:
           echo "| Action | Statut |" >> $GITHUB_STEP_SUMMARY
           echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
           echo "| DAST (Wapiti) | ${{ steps.wapiti.outcome == 'success' && 'Aucune faille majeure' || 'Alertes detectees' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| OWASP ZAP (Challenge) | ${{ steps.zap.outcome == 'success' && 'Termine' || 'Failles detectees' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Deploiement DockerHub | ${{ steps.push.outcome == 'success' && 'Reussi' || 'Echec' }} |" >> $GITHUB_STEP_SUMMARY
