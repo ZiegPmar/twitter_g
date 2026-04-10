@@ -97,7 +97,7 @@ jobs:
           severity: 'CRITICAL'
 
 
-# --- JOB 4 : DAST et Deploy (Lab 4 - Bonus sans Compose) ---
+# --- JOB 4 : DAST et Deploy (Lab 4 - Stable avec Wapiti Direct) ---
   dast-and-deploy:
     runs-on: ubuntu-latest
     needs: [docker-security]
@@ -105,32 +105,28 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 1. Lancement de l'app (On reste sur du Docker classique)
+      # 1. Lancement de l'application
       - name: Start Application
         run: |
           docker build -t twitter_g:test .
-          docker run -d --name webapp twitter_g:test
-          sleep 15
+          # On mappe le port 8000 pour que le runner (Wapiti) puisse y accéder
+          docker run -d -p 8000:8000 --name webapp twitter_g:test
+          sleep 15 # Temps de démarrage sécurisé
 
-# 2. BONUS : Wapiti (Image alternative stable)
+      # 2. BONUS : DAST avec Wapiti (Installation Directe)
       - name: Run Wapiti Scan
         run: |
-          APP_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' webapp)
+          pip install wapiti3
           mkdir results
-          
-          # On ajoute --level 1 pour rester rapide
-          # On peut ajouter -v 1 pour voir ce qu'il fait dans la console
-          docker run --rm -v $(pwd)/results:/results \
-          coolacid/wapiti -u http://$APP_IP:8000 -f html -o /results/wapiti_report.html --level 2
-          
-        # Si tu mets "false", le push DockerHub ne se fera que si l'app est 100% safe
+          # On scanne via localhost:8000 car l'app est mappée sur le runner
+          wapiti -u http://localhost:8000 -f html -o results/wapiti_report.html
         continue-on-error: false
 
-      # 3. BONUS : Exporter le résultat avec un artefact
+      # 3. BONUS : Exportation du rapport HTML (Artefact)
       - name: Upload Wapiti Report
         uses: actions/upload-artifact@v4
         with:
-          name: DAST-Wapiti-Report
+          name: Rapport-DAST-Wapiti
           path: results/wapiti_report.html
 
       # 4. Connexion à DockerHub
@@ -140,7 +136,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 5. Push vers ombrosa/twitter_g
+      # 5. Push final vers ton repo ombrosa/twitter_g
       - name: Build and Push to DockerHub
         uses: docker/build-push-action@v5
         with:
