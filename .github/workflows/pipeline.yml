@@ -95,8 +95,7 @@ jobs:
           format: 'table'
           exit-code: '1'
           severity: 'CRITICAL'
-
-# --- JOB 4 : DAST et Deploy (Lab 4 - Version Corrigée) ---
+# --- JOB 4 : DAST et Deploy (Lab 4 - Version Finale) ---
   dast-and-deploy:
     runs-on: ubuntu-latest
     needs: [docker-security]
@@ -104,20 +103,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 1. Build et lancement (On s'assure que le port exposé est le bon)
-      - name: Start Application for DAST
+      # 1. Build et lancement
+      - name: Start Application
         run: |
           docker build -t twitter_g:test .
-          # On lance sur le port 8000 car c'est celui que Nikto semble chercher
-          docker run -d -p 8000:8000 --name webapp twitter_g:test
-          sleep 15 # On donne un peu plus de temps à l'app pour démarrer
+          # On lance sans mapping complexe pour l'instant
+          docker run -d --name webapp twitter_g:test
+          sleep 15
 
-      # 2. DAST avec Nikto (Cible 127.0.0.1:8000)
+      # 2. DAST avec Nikto (On récupère l'IP du container dynamiquement)
       - name: Run Nikto Scan
         run: |
-          # On utilise l'option -Tuning x pour accélérer et on cible localhost:8000
-          docker run --rm --network="host" kalilinux/kali-rolling /bin/bash -c "apt-get update && apt-get install -y nikto && nikto -h http://127.0.0.1:8000/ -Tuning x"
-        continue-on-error: true
+          # On récupère l'IP interne du container webapp
+          APP_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' webapp)
+          echo "L'application tourne sur l'IP : $APP_IP"
+          
+          # On lance Nikto contre cette IP sur le port 8000
+          docker run --rm kalilinux/kali-rolling /bin/bash -c \
+            "apt-get update && apt-get install -y nikto && nikto -h http://$APP_IP:8000 -Tuning x"
+        continue-on-error: false
 
       # 3. Connexion à DockerHub
       - name: Login to DockerHub
@@ -126,7 +130,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 4. Build et Push final
+      # 4. Build et Push
       - name: Build and Push to DockerHub
         uses: docker/build-push-action@v5
         with:
