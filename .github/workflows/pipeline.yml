@@ -113,12 +113,17 @@ jobs:
           sleep 15
 
 # 2. BONUS : Wapiti (Image alternative stable)
-      - name: Run Wapiti (Plan B - Direct)
+      - name: Run Wapiti Scan
         run: |
-          pip install wapiti3
+          APP_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' webapp)
           mkdir results
-          # On utilise localhost car on ne tourne plus dans un container séparé
-          wapiti -u http://localhost:8000 -f html -o results/wapiti_report.html
+          
+          # On ajoute --level 1 pour rester rapide
+          # On peut ajouter -v 1 pour voir ce qu'il fait dans la console
+          docker run --rm -v $(pwd)/results:/results \
+          coolacid/wapiti -u http://$APP_IP:8000 -f html -o /results/wapiti_report.html --level 2
+          
+        # Si tu mets "false", le push DockerHub ne se fera que si l'app est 100% safe
         continue-on-error: false
 
       # 3. BONUS : Exporter le résultat avec un artefact
