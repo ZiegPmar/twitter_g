@@ -102,7 +102,7 @@ jobs:
           echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
           echo "| Pip-audit (SCA) | ${{ steps.pipaudit.outcome == 'success' && 'Succes' || 'Dependances vulnerables' }} |" >> $GITHUB_STEP_SUMMARY
 
-  # --- JOB 4 : Securite Docker (Regroupé) ---
+  # --- JOB 4 : Sécurité Docker (Config + Image regroupés) ---
   docker-security:
     runs-on: ubuntu-latest
     needs: [lint-and-scan, sast-analysis, sca-analysis]
