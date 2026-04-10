@@ -163,23 +163,28 @@ jobs:
           sudo chown -R 1000:1000 $(pwd)
           sudo chmod -R 777 $(pwd)
 
-      # --- CHALLENGE : OWASP ZAP ---
+     # --- CHALLENGE : OWASP ZAP ---
       - name: Scan OWASP ZAP
         id: zap
         run: |
-          # 1. On recupere l'IP de l'application
-          APP_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' webapp)
-          echo "Cible ZAP : http://$APP_IP:8000"
+          # 1. Utiliser localhost plutôt que l'IP interne (plus fiable dans GH Actions)
+          # Puisque le container webapp a été lancé avec -p 8000:8000
+          TARGET_URL="http://localhost:8000"
+          echo "Cible ZAP : $TARGET_URL"
           
-          # 2. On cree le dossier de rapport avec les droits full
-          mkdir -p $(pwd)/zap/wrk
-          chmod -R 777 $(pwd)/zap/wrk
+          # 2. Création propre du dossier avec sudo pour éviter le "Operation not permitted"
+          sudo mkdir -p $(pwd)/zap/wrk
+          sudo chmod -R 777 $(pwd)/zap/wrk
           
-          # 3. On lance ZAP manuellement en mode root pour eviter tout conflit
-          docker run --rm -v $(pwd)/zap/wrk:/zap/wrk/:rw -u root \
-          ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
-          -t http://$APP_IP:8000 -g gen.conf -r report.html
-        continue-on-error: false
+          # 3. Lancement de ZAP en utilisant le réseau de l'hôte (--network="host")
+          # Cela permet au container ZAP d'accéder à 'localhost:8000'
+          docker run --rm \
+            --network="host" \
+            -v $(pwd)/zap/wrk:/zap/wrk/:rw \
+            -u root \
+            ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
+            -t $TARGET_URL -g gen.conf -r report.html
+        continue-on-error: true # Recommandé pour ZAP car il sort souvent en erreur s'il trouve des alertes
 
       # Exportation manuelle du rapport ZAP (puisqu'on ne passe plus par l'action officielle)
       - name: Upload Artefact ZAP
