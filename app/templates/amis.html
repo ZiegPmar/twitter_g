@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Mes Amis - {{ current_user.display_name }}{% endblock %}
+
+{% block extra_css %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/home.css') }}" />
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/profil.css') }}" />
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/amis.css') }}" />
+{% endblock %}
+
+{% block extra_head %}
+<style>
+  .friends-section { padding: 20px; border-bottom: 1px solid #333; }
+  .friends-section h2 { color: white; margin-bottom: 20px; font-size: 1.2rem; border-bottom: 2px solid #1d9bf0; display: inline-block; padding-bottom: 5px; }
+  .user-card { display: flex; align-items: center; justify-content: space-between; padding: 15px; border-radius: 15px; transition: background 0.2s; margin-bottom: 10px; border: 1px solid #333; }
+  .user-card:hover { background: rgba(255, 255, 255, 0.05); }
+  .user-info-flex { display: flex; align-items: center; gap: 15px; text-decoration: none; color: white; }
+  .user-card img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; }
+  .user-card .names { display: flex; flex-direction: column; }
+  .user-card .display-name { font-weight: bold; }
+  .user-card .username { color: #71767b; font-size: 0.9rem; }
+  .empty-msg { color: #71767b; font-style: italic; padding: 10px 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="layout">
+  <section class="feed">
+    <div class="page-header" style="padding: 15px; border-bottom: 1px solid #333;">
+      <h1 style="color: white; font-size: 1.5rem;">Réseau</h1>
+    </div>
+
+    <div class="friends-section">
+      <h2>Mes Abonnements ({{ abonnements|length }})</h2>
+      {% if abonnements %}
+        {% for user in abonnements %}
+        <div class="user-card">
+          <a href="{{ url_for('main.profile', username=user.username) }}" class="user-info-flex">
+            <img
+              src="{{ url_for('static', filename='img/Avatar/' ~ user.avatar_url) if user.avatar_url and user.avatar_url != 'None' else url_for('static', filename='img/Avatar/47fef09b5e072de28b79f35d0ef4e9cc.webp') }}"
+              alt="Avatar">
+            <div class="names">
+              <span class="display-name">{{ user.display_name }}</span>
+              <span class="username">@{{ user.username }}</span>
+            </div>
+          </a>
+
+          <a
+            href="{{ url_for('main.profile', username=user.username) }}"
+            class="edit-btn"
+            style="text-decoration:none; font-size: 0.8rem; padding: 5px 15px;">
+            Voir
+          </a>
+        </div>
+        {% endfor %}
+      {% else %}
+      <p class="empty-msg">Vous ne suivez personne pour le moment.</p>
+      {% endif %}
+    </div>
+
+    <div class="friends-section">
+      <h2>Mes Abonnés ({{ abonnes|length }})</h2>
+      {% if abonnes %}
+        {% for user in abonnes %}
+        <div class="user-card">
+          <a href="{{ url_for('main.profile', username=user.username) }}" class="user-info-flex">
+            <img
+              src="{{ url_for('static', filename='img/Avatar/' ~ user.avatar_url) if user.avatar_url and user.avatar_url != 'None' else url_for('static', filename='img/Avatar/47fef09b5e072de28b79f35d0ef4e9cc.webp') }}"
+              alt="Avatar">
+            <div class="names">
+              <span class="display-name">{{ user.display_name }}</span>
+              <span class="username">@{{ user.username }}</span>
+            </div>
+          </a>
+
+          <a
+            href="{{ url_for('main.profile', username=user.username) }}"
+            class="edit-btn"
+            style="text-decoration:none; font-size: 0.8rem; padding: 5px 15px;">
+            Voir
+          </a>
+        </div>
+        {% endfor %}
+      {% else %}
+      <p class="empty-msg">Personne ne vous suit encore.</p>
+      {% endif %}
+    </div>
+  </section>
+</main>
+{% endblock %}

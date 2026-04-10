@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>G - Connexion</title>
+    <link rel="icon" href="{{ url_for('static', filename='img/logo.webp') }}" type="image/png">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+</head>
+
+<body>
+    <!-- Logo -->
+    <img src="{{ url_for('static', filename='img/logo.webp') }}" alt="Logo" class="logo" />
+
+    <!-- Formulaire de connexion -->
+    <div class="login_page">
+        <form method="POST" action="{{ url_for('main.connexion') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="username">
+                <h1>Identifiant :</h1>
+                <input type="text" name="username" placeholder="Entrez votre nom d'utilisateur" required>
+            </div>
+
+            <div class="password">
+                <h1>Mot de passe :</h1>
+                <input type="password" name="password" placeholder="Entrez votre mot de passe" required>
+            </div>
+
+            {% if error %}
+            <p class="error-msg">{{ error }}</p>
+            {% endif %}
+
+            <button type="submit">Se connecter</button>
+        </form>
+    </div>
+
+    <!-- Lien vers inscription -->
+    <div class="create_account">
+        <a href="{{ url_for('main.inscription') }}">Créer un compte</a>
+    </div>
+</body>
+
+</html>

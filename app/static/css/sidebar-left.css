@@ -1,0 +1,385 @@
+/* =================================================
+   1. STRUCTURE DE LA SIDEBAR
+================================================= */
+.sidebar-sommaire {
+    box-sizing: border-box;
+    width: 240px;
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    background: #141313;
+    border-right: 1px solid #333;
+    padding: 20px;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+}
+
+/* =================================================
+   2. LOGO DE LA SIDEBAR
+================================================= */
+.logo {
+    display: block;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.logo img {
+    width: 120px;
+    height: auto;
+}
+
+/* =================================================
+   3. NAVIGATION PRINCIPALE
+================================================= */
+.sommaire-section {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.sommaire-section a {
+    text-decoration: none;
+    color: #cdcdcd;
+    font-size: 22px;
+    transition: color 0.2s;
+    display: flex;
+    align-items: center;
+    padding-top: 10px;
+}
+
+.sommaire-section a:hover {
+    color: #00CFF6;
+}
+
+.fa-solid {
+    width: 25px;
+    margin-right: 10px;
+}
+
+.text-sidebar {
+    text-decoration: none;
+    color: #cdcdcd;
+}
+
+/* =================================================
+   3.1 BADGES NOTIFICATIONS / MESSAGES
+================================================= */
+.text-sidebar.notif-sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+}
+
+.sidebar-icon-wrap {
+    position: relative;
+    width: 25px;
+    min-width: 25px;
+    height: 25px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar-icon-wrap .fa-solid {
+    width: auto;
+    margin-right: 0;
+}
+
+.notif-badge {
+    position: absolute;
+    top: -7px;
+    right: -10px;
+
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+
+    border-radius: 999px;
+    background: #f91880;
+    color: white;
+
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 2px solid #141313;
+    box-sizing: border-box;
+    z-index: 2;
+}
+
+/* =================================================
+   4. BOUTON PUBLIER
+================================================= */
+.sidebar-publish-btn {
+    background-color: #1d9bf0;
+    color: white;
+    border: none;
+    border-radius: 999px;
+    padding: 15px;
+    font-size: 17px;
+    font-weight: bold;
+    cursor: pointer;
+    width: 90%;
+    margin-top: auto;
+    margin-bottom: 10px;
+    transition: background-color 0.2s ease;
+}
+
+.sidebar-publish-btn:hover {
+    background-color: #1a8cd8;
+}
+
+/* =================================================
+   5. SECTION PROFIL (BAS DE SIDEBAR)
+================================================= */
+.profil-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    margin-top: auto;
+    border-radius: 999px;
+    transition: background 0.2s ease;
+    cursor: pointer;
+    width: 100%;
+    box-sizing: border-box;
+    text-decoration: none;
+    color: white;
+}
+
+.profil-section:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.profil-section img {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid #444;
+    flex-shrink: 0;
+}
+
+.profil-info {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.profil-display-name {
+    color: white;
+    font-weight: bold;
+    font-size: 15px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.profil-username {
+    color: #8b98a5;
+    font-size: 14px;
+}
+
+/* =================================================
+   6. BOUTON LOGOUT
+================================================= */
+.logout-btn {
+    color: white;
+    font-size: 18px;
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s, background 0.2s;
+    background: transparent;
+    border: none;
+    text-decoration: none;
+}
+
+.logout-btn:hover {
+    background-color: rgba(244, 33, 46, 0.1);
+    color: #f4212e;
+    text-decoration: none;
+}
+
+/* =================================================
+   7. MODAL DE PUBLICATION
+================================================= */
+.publish-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(91, 112, 131, 0.4);
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    z-index: 2000;
+    padding-top: 5vh;
+}
+
+.publish-modal {
+    width: 100%;
+    max-width: 600px;
+    background: #141313;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+}
+
+.publish-modal-header {
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+    border-bottom: 1px solid #2f3336;
+}
+
+.close-publish-btn {
+    background: transparent;
+    border: none;
+    color: #eff3f4;
+    font-size: 20px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease;
+}
+
+.close-publish-btn:hover {
+    background: rgba(239, 243, 244, 0.1);
+}
+
+.publish-modal-body {
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+}
+
+.publish-modal-body textarea {
+    width: 100%;
+    min-height: 120px;
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 20px;
+    font-family: inherit;
+    resize: none;
+    outline: none;
+    margin-bottom: 10px;
+}
+
+.publish-modal-body textarea::placeholder {
+    color: #8b98a5;
+}
+
+/* =================================================
+   8. FOOTER MODAL & OUTILS
+================================================= */
+.publish-modal-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #2f3336;
+    padding-top: 10px;
+    position: relative;
+}
+
+.publish-modal-tools {
+    display: flex;
+    gap: 5px;
+}
+
+.tool-btn {
+    background: transparent;
+    border: none;
+    color: #1d9bf0;
+    font-size: 18px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease;
+}
+
+.tool-btn:hover {
+    background: rgba(29, 155, 240, 0.1);
+}
+
+.publish-submit-btn {
+    background: #1d9bf0;
+    color: white;
+    border: none;
+    border-radius: 999px;
+    padding: 8px 18px;
+    font-weight: bold;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.publish-submit-btn:hover {
+    background: #1a8cd8;
+}
+
+/* =================================================
+   9. APERÇU MÉDIA DANS MODAL
+================================================= */
+.modal-img-preview-container {
+    position: relative;
+    margin-bottom: 15px;
+    display: none;
+}
+
+.modal-img-preview-container img {
+    width: 100%;
+    border-radius: 16px;
+    max-height: 300px;
+    object-fit: cover;
+}
+
+.modal-remove-img-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(15, 20, 25, 0.75);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+}
+
+/* =================================================
+   10. EMOJI PICKER
+================================================= */
+.emoji-picker-container {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 10px;
+    display: none;
+    z-index: 1000;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+    border-radius: 10px;
+}

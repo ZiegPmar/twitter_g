@@ -1,0 +1,73 @@
+<div class="publish-modal-overlay" id="publishModalOverlay">
+  <div class="publish-modal">
+    <div class="publish-modal-header">
+      <button
+        type="button"
+        class="close-publish-btn"
+        id="closePublishModalBtn">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="publish-modal-body">
+      <form
+        action="{{ url_for('main.add_post') }}"
+        method="POST"
+        enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+        <textarea
+          name="content"
+          id="modalTextarea"
+          placeholder="Quoi de neuf ?"
+          required></textarea>
+
+        <input
+          type="file"
+          name="media"
+          id="modalMediaInput"
+          accept="image/*"
+          style="display: none" />
+
+        <div
+          class="modal-img-preview-container"
+          id="modalImgPreviewContainer"
+          style="display: none">
+          <img src id="modalImgPreview" alt="Aperçu" />
+          <button
+            type="button"
+            class="modal-remove-img-btn"
+            id="modalRemoveImgBtn">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <div class="publish-modal-footer">
+          <div class="publish-modal-tools">
+            <button
+              type="button"
+              class="tool-btn"
+              id="modalAddMediaBtn"
+              title="Média">
+              <i class="fa-regular fa-image"></i>
+            </button>
+
+            <button
+              type="button"
+              class="tool-btn"
+              id="modalEmojiBtn"
+              title="Emoji">
+              <i class="fa-regular fa-face-smile"></i>
+            </button>
+          </div>
+
+          <div
+            id="emojiPickerContainer"
+            class="emoji-picker-container"></div>
+
+          <button type="submit" class="publish-submit-btn">Publier</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

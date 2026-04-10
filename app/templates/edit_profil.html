@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Éditer le profil{% endblock %}
+
+{% block extra_css %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/edit_profil.css') }}" />
+{% endblock %}
+
+{% block content %}
+<div class="main">
+  <form
+    action="{{ url_for('main.edit_profile') }}"
+    method="POST"
+    enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+    <div class="profile-nav-header">
+      <div class="header-left-group">
+        <a
+          href="{{ url_for('main.profile', username=current_user.username) }}"
+          class="back-btn">
+          <i class="fa-solid fa-xmark"></i>
+        </a>
+        <h2 class="header-title">Éditer le profil</h2>
+      </div>
+
+      <button type="submit" class="save-btn">Enregistrer</button>
+    </div>
+
+    <div class="profile-container">
+      <div class="banner edit-mode">
+        {% if current_user.banner_url %}
+        <img
+          src="{{ url_for('static', filename='img/banniere/' + current_user.banner_url) }}"
+          alt="Banner" />
+        {% else %}
+        <div class="banner-placeholder"></div>
+        {% endif %}
+
+        <label for="banner_input" class="camera-icon">
+          <i class="fa-solid fa-camera"></i>
+        </label>
+
+        <input
+          type="file"
+          id="banner_input"
+          name="banner"
+          accept="image/*"
+          hidden />
+      </div>
+
+      <div class="profile-info-section">
+        <div class="profile-header">
+          <div class="avatar-container edit-mode">
+            <img
+              src="{{ url_for('static', filename='img/Avatar/' + current_user.avatar_url) if current_user.avatar_url else url_for('static', filename='img/Avatar/default_avatar.png') }}"
+              class="profile-pdp" />
+
+            <label for="avatar_input" class="camera-icon">
+              <i class="fa-solid fa-camera"></i>
+            </label>
+
+            <input
+              type="file"
+              id="avatar_input"
+              name="avatar"
+              accept="image/*"
+              hidden />
+          </div>
+        </div>
+
+        <div class="user-details-edit">
+          <div class="input-group">
+            <label for="display_name">Nom</label>
+            <input
+              type="text"
+              id="display_name"
+              name="display_name"
+              value="{{ current_user.display_name }}" />
+          </div>
+
+          <div class="input-group">
+            <label for="bio">Bio</label>
+            <textarea id="bio" name="bio" rows="4">{{ current_user.bio if current_user.bio else '' }}</textarea>
+          </div>
+
+          <div class="input-group">
+            <label for="email">Email</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value="{{ current_user.email if current_user.email else '' }}"
+              placeholder="Ajouter votre email" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}

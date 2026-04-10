@@ -1,0 +1,278 @@
+name: CI Qualite et Securite
+
+on:
+  push:
+    branches: [ main, develop, pipeline ]
+  pull_request:
+    branches: [ main, develop, pipeline ]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  # --- JOB 0 : Détection de changements ---
+  check-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      python_changed: ${{ steps.filter.outputs.any_changed }}
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 
+
+      - name: Vérifier fichiers Python
+        id: filter
+        uses: tj-actions/changed-files@v44
+        with:
+          files: |
+            **/*.py
+            requirements.txt
+
+  # --- JOB 1 : Qualité du code et Secrets ---
+  lint-and-scan:
+    needs: [check-changes]
+    if: needs.check-changes.outputs.python_changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Analyse Ruff
+        id: ruff
+        run: |
+          pip install ruff
+          ruff check .
+        continue-on-error: false
+
+      - name: Scan Gitleaks
+        id: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: false
+
+      - name: Scan TruffleHog
+        id: trufflehog
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+        continue-on-error: false
+
+      - name: Resume Etape 1
+        if: always()
+        run: |
+          echo "## Recapitulatif Qualite et Secrets" >> $GITHUB_STEP_SUMMARY
+          echo "| Outil | Statut |" >> $GITHUB_STEP_SUMMARY
+          echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
+          echo "| Ruff | ${{ steps.ruff.outcome == 'success' && 'Succes' || 'Erreur' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Gitleaks | ${{ steps.gitleaks.outcome == 'success' && 'Succes' || 'Alerte' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| TruffleHog | ${{ steps.trufflehog.outcome == 'success' && 'Succes' || 'Alerte' }} |" >> $GITHUB_STEP_SUMMARY
+
+  # --- JOB 2 : Analyse statique (SAST) ---
+  sast-analysis:
+    needs: [check-changes]
+    if: needs.check-changes.outputs.python_changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Scan Bandit
+        id: bandit
+        run: |
+          pip install bandit
+          bandit -r . -ll
+        continue-on-error: false
+
+      - name: Resume SAST
+        if: always()
+        run: |
+          echo "## Recapitulatif SAST" >> $GITHUB_STEP_SUMMARY
+          echo "| Outil | Statut |" >> $GITHUB_STEP_SUMMARY
+          echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
+          echo "| Bandit (SAST) | ${{ steps.bandit.outcome == 'success' && 'Succes' || 'Vulnerabilites detectees' }} |" >> $GITHUB_STEP_SUMMARY
+
+  # --- JOB 3 : Analyse des dependances (SCA) ---
+  sca-analysis:
+    needs: [check-changes]
+    if: needs.check-changes.outputs.python_changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Pip-audit
+        id: pipaudit
+        run: |
+          pip install pip-audit
+          pip-audit -r requirements.txt
+        continue-on-error: false
+
+      - name: Resume SCA
+        if: always()
+        run: |
+          echo "## Recapitulatif SCA" >> $GITHUB_STEP_SUMMARY
+          echo "| Outil | Statut |" >> $GITHUB_STEP_SUMMARY
+          echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
+          echo "| Pip-audit (SCA) | ${{ steps.pipaudit.outcome == 'success' && 'Succes' || 'Dependances vulnerables' }} |" >> $GITHUB_STEP_SUMMARY
+
+  # --- JOB 4 : Trivy Config (IaC) ---
+  trivy-config:
+    runs-on: ubuntu-latest
+    needs: [lint-and-scan, sast-analysis, sca-analysis]
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Trivy (Config IaC)
+        id: trivy_config
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          exit-code: '1'
+          severity: 'HIGH,CRITICAL'
+        continue-on-error: false
+
+      - name: Resume Trivy Config
+        if: always()
+        run: |
+          echo "## Recapitulatif Trivy Config" >> $GITHUB_STEP_SUMMARY
+          echo "| Scan | Resultat |" >> $GITHUB_STEP_SUMMARY
+          echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
+          echo "| Trivy (Config) | ${{ steps.trivy_config.outcome == 'success' && 'Conforme' || 'Non-conforme' }} |" >> $GITHUB_STEP_SUMMARY
+
+  # --- JOB 5 : Trivy Image ---
+  trivy-image:
+    runs-on: ubuntu-latest
+    needs: [lint-and-scan, sast-analysis, sca-analysis]
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Build Image Docker
+        run: docker build -t twitter_g:${{ github.sha }} .
+
+      - name: Trivy (Image)
+        id: trivy_image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'twitter_g:${{ github.sha }}'
+          format: 'table'
+          exit-code: '1'
+          severity: 'HIGH'
+        continue-on-error: true
+
+      - name: Resume Trivy Image
+        if: always()
+        run: |
+          echo "## Recapitulatif Trivy Image" >> $GITHUB_STEP_SUMMARY
+          echo "| Scan | Resultat |" >> $GITHUB_STEP_SUMMARY
+          echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
+          echo "| Trivy (Image) | ${{ steps.trivy_image.outcome == 'success' && 'Propre' || 'Vulnerabilites detectees' }} |" >> $GITHUB_STEP_SUMMARY
+
+  # --- JOB 6 : Scan Wapiti ---
+  wapiti-scan:
+    runs-on: ubuntu-latest
+    needs: [trivy-image, trivy-config]
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Lancement Application
+        run: |
+          docker build -t twitter_g:test .
+          docker run -d --name webapp -p 8000:8000 twitter_g:test
+          sleep 15 
+
+      - name: Scan Wapiti
+        id: wapiti
+        run: |
+          pip install wapiti3
+          mkdir -p results
+          wapiti -u http://localhost:8000 -f html -o results/wapiti_report.html
+        continue-on-error: true
+
+      - name: Upload Artefact Wapiti
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Rapport-Wapiti
+          path: results/wapiti_report.html
+
+  # --- JOB 7 : Scan OWASP ZAP ---
+  zap-scan:
+    runs-on: ubuntu-latest
+    needs: [trivy-image, trivy-config]
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Lancement Application
+        run: |
+          docker network create zap-network
+          docker build -t twitter_g:test .
+          docker run -d --name webapp --network zap-network -p 8000:8000 twitter_g:test
+          sleep 15 
+
+      - name: Scan OWASP ZAP
+        id: zap
+        run: |
+          sudo mkdir -p $(pwd)/zap/wrk
+          sudo chmod -R 777 $(pwd)/zap/wrk
+          docker run --rm \
+            --network zap-network \
+            -v $(pwd)/zap/wrk:/zap/wrk/:rw \
+            -u root \
+            ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
+            -t http://webapp:8000 -g gen.conf -r report.html
+        continue-on-error: true
+
+      - name: Upload Artefact ZAP
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Rapport-ZAP
+          path: zap/wrk/report.html
+
+  # --- JOB 8 : Deploiement final ---
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [wapiti-scan, zap-scan]
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Login DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Push DockerHub
+        id: push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ombrosa/twitter_g:latest
+            ombrosa/twitter_g:${{ github.sha }}
+
+      - name: Resume Etape Finale
+        if: always()
+        run: |
+          echo "## Recapitulatif Deploiement" >> $GITHUB_STEP_SUMMARY
+          echo "| Action | Statut |" >> $GITHUB_STEP_SUMMARY
+          echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
+          echo "| Deploiement DockerHub | ${{ steps.push.outcome == 'success' && 'Reussi' || 'Echec' }} |" >> $GITHUB_STEP_SUMMARY

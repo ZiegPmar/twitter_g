@@ -1,0 +1,91 @@
+<nav class="sidebar-sommaire">
+    <a href="{{ url_for('main.feed') }}" class="logo">
+        <img
+            src="{{ url_for('static', filename='img/logo.webp') }}"
+            alt="Logo" />
+    </a>
+
+    <div class="sommaire-section">
+        <a class="text-sidebar" href="{{ url_for('main.feed') }}">
+            <i class="fa-solid fa-house"></i>
+            <span>Home</span>
+        </a>
+
+        <a class="text-sidebar" href="{{ url_for('main.amis') }}">
+            <i class="fa-solid fa-user-group"></i>
+            <span>Amis</span>
+        </a>
+
+        <a
+            class="text-sidebar notif-sidebar-link"
+            href="{{ url_for('main.messages_page') }}">
+            <span class="sidebar-icon-wrap">
+                <i class="fa-solid fa-envelope"></i>
+                {% if unread_messages_count and unread_messages_count > 0 %}
+                <span class="notif-badge">
+                    {% if unread_messages_count > 9 %}
+                    9+
+                    {% else %}
+                    {{ unread_messages_count }}
+                    {% endif %}
+                </span>
+                {% endif %}
+            </span>
+            <span>Message</span>
+        </a>
+
+        <a
+            class="text-sidebar notif-sidebar-link"
+            href="{{ url_for('main.notifications') }}">
+            <span class="sidebar-icon-wrap">
+                <i class="fa-solid fa-bell"></i>
+                {% if unread_notifications_count and unread_notifications_count
+                > 0 %}
+                <span class="notif-badge">
+                    {% if unread_notifications_count > 9 %}
+                    9+
+                    {% else %}
+                    {{ unread_notifications_count }}
+                    {% endif %}
+                </span>
+                {% endif %}
+            </span>
+            <span>Notifications</span>
+        </a>
+
+        {% if show_publish_button %}
+        <button class="sidebar-publish-btn" id="openPublishModalBtn">
+            Publier
+        </button>
+        {% endif %}
+    </div>
+
+    {% if current_user %}
+    <a
+        href="{{ url_for('main.profile', username=current_user['username']) }}"
+        class="profil-section profil-link">
+        <div class="profil-avatar-link">
+            <img
+                src="{{ url_for('static', filename='img/Avatar/' ~ current_user['avatar_url']) if current_user['avatar_url'] and current_user['avatar_url'] != 'None' else url_for('static', filename='img/Avatar/47fef09b5e072de28b79f35d0ef4e9cc.webp') }}"
+                alt="Avatar" />
+        </div>
+
+        <div class="profil-info">
+            <span class="profil-display-name">{{ current_user['display_name']
+                }}</span>
+            <span class="profil-username">@{{ current_user['username'] }}</span>
+        </div>
+
+        <button
+            type="button"
+            class="logout-btn"
+            title="Se déconnecter"
+            onclick="
+        event.preventDefault();
+        window.location.href = '{{ url_for('main.logout') }}';
+      ">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+        </button>
+    </a>
+    {% endif %}
+</nav>

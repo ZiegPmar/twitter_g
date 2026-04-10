@@ -1,0 +1,223 @@
+/* =================================================
+   1. BASE & RÉINITIALISATION
+================================================= */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #121212;
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+/* =================================================
+   2. STRUCTURE GÉNÉRALE & LAYOUT
+================================================= */
+.main {
+    margin-left: 240px;
+    margin-right: 240px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.profile-container {
+    width: 100%;
+    max-width: 900px;
+    border: 1px solid #333;
+    border-top: none;
+    background-color: #141313;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    overflow: visible;
+}
+
+/* =================================================
+   3. BANNIÈRE & IMAGE PRINCIPALE
+================================================= */
+.banner {
+    width: 800px;
+    height: 250px;
+    position: relative;
+    background-color: #333;
+}
+
+.banner img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* =================================================
+   4. AVATAR & SECTION PROFIL
+================================================= */
+.profile-info-section {
+    padding: 0 15px 15px 15px;
+    position: relative;
+}
+
+.profile-header {
+    display: flex;
+    justify-content: flex-end;
+    height: 70px;
+}
+
+.avatar-container {
+    position: absolute;
+    top: -70px;
+    left: 15px;
+    width: 140px;
+    height: 140px;
+    z-index: 5;
+}
+
+.profile-pdp {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 4px solid #141313;
+    object-fit: cover;
+}
+
+.camera-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.5);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0; 
+    margin: 0;
+}
+
+.camera-icon i {
+    display: block;
+    line-height: 1;
+    font-size: 18px;
+    text-align: center;
+}
+
+/* =================================================
+   5. HEADER DE NAVIGATION FIXE
+================================================= */
+.profile-nav-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 0 15px !important;
+    height: 53px !important;
+    background-color: #141313 !important;
+    border-bottom: 1px solid #333 !important;
+    
+    width: 100% !important;
+    max-width: 900px !important;
+    box-sizing: border-box !important;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-left-group {
+    display: flex !important;
+    align-items: center !important;
+    gap: 20px !important;
+}
+
+.back-btn {
+    color: #cdcdcd;
+    font-size: 20px;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.header-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0;
+    color: #cdcdcd;
+}
+
+.save-btn {
+    background-color: #cdcdcd !important;
+    color: black !important;
+    border: none !important;
+    padding: 6px 16px !important;
+    border-radius: 20px !important;
+    font-weight: bold !important;
+    cursor: pointer !important;
+    font-size: 14px !important;
+    min-width: 80px !important; 
+}
+
+/* =================================================
+   6. FORMULAIRE D'ÉDITION
+================================================= */
+.user-details-edit {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 10px;
+}
+
+.input-group {
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: 8px 12px;
+    display: flex;
+    flex-direction: column;
+}
+
+.input-group:focus-within {
+    border-color: #1d9bf0;
+}
+
+.input-group label {
+    color: #71767b;
+    font-size: 13px;
+    margin-bottom: 4px;
+}
+
+.input-group input, 
+.input-group textarea {
+    background: transparent;
+    border: none;
+    color: #cdcdcd;
+    font-size: 16px;
+    outline: none;
+    font-family: inherit;
+    resize: none;
+}
+
+/* =================================================
+   7. SECTION DATE DE NAISSANCE
+================================================= */
+.birthdate-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    cursor: pointer;
+    border-top: 1px solid #333;
+}
+
+.birthdate-text .label { 
+    color: #71767b; 
+    display: block; 
+}
+
+.birthdate-text .value { 
+    color: #1d9bf0; 
+    font-size: 16px; 
+}
+
+

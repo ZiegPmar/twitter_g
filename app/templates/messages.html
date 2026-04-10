@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Messages{% endblock %}
+
+{% block extra_css %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/messages.css') }}" />
+{% endblock %}
+
+{% block content %}
+<main class="messages-page">
+  <aside class="conversations-sidebar">
+    <div class="messages-header">
+      <h1>Messages</h1>
+
+      <button id="toggle-new-message" class="new-message-btn" type="button">
+        <i class="fa-solid fa-pen"></i>
+        Nouveau message
+      </button>
+    </div>
+
+    <div
+      id="messages-page-data"
+      data-selected-user-id="{{ selected_user['id'] if selected_user else '' }}"
+      data-selected-username="{{ selected_user['username'] if selected_user else '' }}"
+      data-selected-display-name="{{ selected_user['display_name'] if selected_user else '' }}"
+      data-selected-avatar="{{ selected_user['avatar_url'] if selected_user else '' }}">
+    </div>
+
+    <div id="new-message-panel" class="new-message-panel hidden">
+      <input
+        type="text"
+        id="user-search"
+        class="new-message-search"
+        placeholder="Rechercher un utilisateur..." />
+
+      <div id="user-results" class="user-results"></div>
+    </div>
+
+    <div id="conversations-list" class="conversations-list">
+      {% for conv in conversations %}
+      <button
+        type="button"
+        class="conversation-item"
+        data-user-id="{{ conv.other_user_id }}"
+        data-username="{{ conv.username }}"
+        data-display-name="{{ conv.display_name }}"
+        data-avatar="{{ conv.avatar_url if conv.avatar_url else '' }}">
+
+        <img
+          src="{% if conv.avatar_url %}{{ url_for('static', filename='img/Avatar/' ~ conv.avatar_url) }}{% else %}{{ url_for('static', filename='img/Avatar/47fef09b5e072de28b79f35d0ef4e9cc.webp') }}{% endif %}"
+          alt="Avatar"
+          class="conversation-avatar" />
+
+        <div class="conversation-content">
+          <div class="conversation-top">
+            <span class="conversation-name">{{ conv.display_name }}</span>
+            <span class="conversation-time">{{ conv.last_message_date }}</span>
+          </div>
+
+          <div class="conversation-bottom">
+            <span class="conversation-preview">{{ conv.last_message }}</span>
+
+            {% if conv.unread_count > 0 %}
+            <span class="conversation-badge">{{ conv.unread_count }}</span>
+            {% endif %}
+          </div>
+        </div>
+      </button>
+      {% else %}
+      <div class="empty-conversations">
+        Aucune conversation pour le moment.
+      </div>
+      {% endfor %}
+    </div>
+  </aside>
+
+  <section class="conversation-panel">
+    <div id="empty-conversation" class="empty-conversation">
+      <h2>Vos messages</h2>
+      <p>Sélectionne une conversation pour commencer.</p>
+    </div>
+
+    <div id="conversation-view" class="conversation-view hidden">
+      <header id="conversation-header" class="conversation-header"></header>
+
+      <div id="messages-thread" class="messages-thread"></div>
+
+      <form id="message-form" class="message-form">
+        <textarea
+          id="message-input"
+          name="content"
+          placeholder="Écrire un message..."
+          required></textarea>
+        <button type="submit">Envoyer</button>
+      </form>
+    </div>
+  </section>
+</main>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='javascript/messages.js') }}"></script>
+{% endblock %}

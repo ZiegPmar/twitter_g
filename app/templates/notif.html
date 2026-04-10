@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Notifications{% endblock %}
+
+{% block extra_css %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/notif.css') }}" />
+{% endblock %}
+
+{% block content %}
+<div class="main">
+  <div class="page-header">
+    <a href="javascript:history.back()">
+      <i class="fa-solid fa-arrow-left"></i>
+    </a>
+    <span>Notifications</span>
+  </div>
+
+  <div class="notif-list">
+    {% for notif in notifications %}
+    <a
+      href="{% if notif['type'] == 'follow' %}{{ url_for('main.profile', username=notif['sender_username']) }}{% elif notif['type'] == 'message' %}{{ url_for('main.messages_page', user_id=notif['sender_id']) }}{% elif notif['post_id'] %}{{ url_for('main.view_post', post_id=notif['post_id']) }}{% else %}#{% endif %}"
+      class="notif-card-link">
+      <article
+        class="notif-card {% if not notif['is_read'] %}notif-unread{% endif %}">
+        <div class="notif-left-icon">
+          {% if notif['type'] == 'like' %}
+          <i class="fa-solid fa-heart"></i>
+          {% elif notif['type'] == 'reply' %}
+          <i class="fa-solid fa-comment"></i>
+          {% elif notif['type'] == 'follow' %}
+          <i class="fa-solid fa-user-plus"></i>
+          {% elif notif['type'] == 'message' %}
+          <i class="fa-solid fa-envelope"></i>
+          {% else %}
+          <i class="fa-solid fa-bell"></i>
+          {% endif %}
+        </div>
+
+        <div class="notif-main">
+          <div class="notif-top-row">
+            <div class="notif-avatar">
+              <img
+                src="{{ url_for('static', filename='img/Avatar/' ~ notif['sender_avatar_url']) if notif['sender_avatar_url'] and notif['sender_avatar_url'] != 'None' else url_for('static', filename='img/Avatar/47fef09b5e072de28b79f35d0ef4e9cc.webp') }}"
+                alt="Avatar" />
+            </div>
+
+            <div class="notif-text-content">
+              <p class="notif-text">
+                {% if notif['type'] == 'like' %}
+                <span class="notif-prefix">Like de</span>
+                <strong>{{ notif['sender_display_name'] }}</strong>
+                <span class="notif-date-inline">
+                  · {{ notif['created_at'] }}
+                </span>
+
+                {% elif notif['type'] == 'reply' %}
+                <span class="notif-prefix">Réponse de</span>
+                <strong>{{ notif['sender_display_name'] }}</strong>
+                <span class="notif-date-inline">
+                  · {{ notif['created_at'] }}
+                </span>
+
+                {% elif notif['type'] == 'follow' %}
+                <span class="notif-prefix">Nouveau follow de</span>
+                <strong>{{ notif['sender_display_name'] }}</strong>
+                <span class="notif-date-inline">
+                  · {{ notif['created_at'] }}
+                </span>
+
+                {% elif notif['type'] == 'message' %}
+                <span class="notif-prefix">Message de</span>
+                <strong>{{ notif['sender_display_name'] }}</strong>
+                <span class="notif-date-inline">
+                  · {{ notif['created_at'] }}
+                </span>
+                {% endif %}
+              </p>
+
+              {% if notif['type'] == 'reply' and notif['reply_content'] %}
+              <p class="notif-reply-text">{{ notif['reply_content'] }}</p>
+              {% endif %}
+
+              {% if notif['type'] == 'message' and notif['message_content'] %}
+              <p class="notif-message-preview">
+                {{ notif['message_content'][:170] }}{% if notif['message_content']|length > 170 %}...{% endif %}
+              </p>
+              {% endif %}
+
+              {% if notif['post_content'] %}
+              <p class="notif-post-preview">
+                {{ notif['post_content'][:170] }}{% if notif['post_content']|length > 170 %}...{% endif %}
+              </p>
+              {% endif %}
+            </div>
+
+            {% if notif['post_media_url'] %}
+            <div class="notif-thumb">
+              <img
+                src="{{ notif['post_media_url'] }}"
+                alt="Image du post" />
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </article>
+    </a>
+    {% else %}
+    <div class="notif-empty">
+      <p>Aucune notification pour le moment.</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
