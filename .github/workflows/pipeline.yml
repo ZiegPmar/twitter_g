@@ -113,14 +113,12 @@ jobs:
           sleep 15
 
 # 2. BONUS : Wapiti (Image alternative stable)
-      - name: Run Wapiti Scan
+      - name: Run Wapiti (Plan B - Direct)
         run: |
-          APP_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' webapp)
+          pip install wapiti3
           mkdir results
-          
-          # On change l'image pour coolacid/wapiti qui est plus fiable
-          docker run --rm -v $(pwd)/results:/results \
-          coolacid/wapiti -u http://$APP_IP:8000 -f html -o /results/wapiti_report.html
+          # On utilise localhost car on ne tourne plus dans un container séparé
+          wapiti -u http://localhost:8000 -f html -o results/wapiti_report.html
         continue-on-error: false
 
       # 3. BONUS : Exporter le résultat avec un artefact
