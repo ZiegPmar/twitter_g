@@ -95,7 +95,9 @@ jobs:
           format: 'table'
           exit-code: '1'
           severity: 'CRITICAL'
-# --- JOB 4 : DAST et Deploy (Lab 4 - Version Finale) ---
+
+
+# --- JOB 4 : DAST et Deploy  ---
   dast-and-deploy:
     runs-on: ubuntu-latest
     needs: [docker-security]
@@ -103,34 +105,38 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 1. Build et lancement
-      - name: Start Application
+      # 1. BONUS : Gestion de docker-compose dans la pipeline
+      - name: Start services with Docker Compose
         run: |
-          docker build -t twitter_g:test .
-          # On lance sans mapping complexe pour l'instant
-          docker run -d --name webapp twitter_g:test
-          sleep 15
+          docker-compose up -d
+          sleep 20 # On laisse un peu de temps à l'app et ses services (DB, etc.)
 
-      # 2. DAST avec Nikto (On récupère l'IP du container dynamiquement)
-      - name: Run Nikto Scan
+      # 2. BONUS : Remplacer Nikto par Wapiti
+      - name: Run Wapiti Scan
         run: |
-          # On récupère l'IP interne du container webapp
-          APP_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' webapp)
-          echo "L'application tourne sur l'IP : $APP_IP"
-          
-          # On lance Nikto contre cette IP sur le port 8000
-          docker run --rm kalilinux/kali-rolling /bin/bash -c \
-            "apt-get update && apt-get install -y nikto && nikto -h http://$APP_IP:8000 -Tuning x"
-        continue-on-error: false
+          # Créer un dossier pour les résultats
+          mkdir results
+          # On lance Wapiti contre le service défini dans docker-compose (généralement sur le port 8000 ou 8080)
+          # -f html : format du rapport / -o : dossier de sortie
+          docker run --rm --network="host" -v $(pwd)/results:/results \
+          vaimu/wapiti wapiti -u http://localhost:8000 -f html -o /results/wapiti_report.html
+        continue-on-error: true
 
-      # 3. Connexion à DockerHub
+      # 3. BONUS : Exporter le résultat avec un artefact
+      - name: Upload Wapiti Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: DAST-Wapiti-Report
+          path: results/wapiti_report.html
+
+      # 4. Connexion à DockerHub
       - name: Login to DockerHub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 4. Build et Push
+      # 5. Push vers DockerHub
       - name: Build and Push to DockerHub
         uses: docker/build-push-action@v5
         with:
