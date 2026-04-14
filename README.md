@@ -91,4 +91,4 @@ L'instruction host='0.0.0.0' indique au serveur de liaison de s'attacher à tout
 
 **Contexte d'utilisation :**
 
-    Dans notre cas, ce choix est délibéré afin de faciliter le déploiement rapide et la conteneurisation (Docker). Le tag # nosec permet de maintenir un pipeline CI/CD "propre" sans bloquer sur des alertes connues et acceptées dans ce périmètre de développement. En environnement de production critique, cette pratique est proscrite. 
+Dans notre cas, ce choix est délibéré afin de faciliter le déploiement rapide et la conteneurisation (Docker). Le tag # nosec permet de maintenir un pipeline CI/CD "propre" sans bloquer sur des alertes connues et acceptées dans ce périmètre de développement. En environnement de production critique, cette pratique est proscrite. 
