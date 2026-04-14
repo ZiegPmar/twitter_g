@@ -2,9 +2,9 @@ name: CI Qualite et Securite
 
 on:
   push:
-    branches: [ main, develop, pipeline ]
+    branches: [main, develop, pipeline]
   pull_request:
-    branches: [ main, develop, pipeline ]
+    branches: [main, develop, pipeline]
 
 permissions:
   contents: read
@@ -20,7 +20,7 @@ jobs:
   #     - name: Checkout du code
   #       uses: actions/checkout@v4
   #       with:
-  #         fetch-depth: 0 
+  #         fetch-depth: 0
 
   #     - name: Vérifier fichiers Python
   #       id: filter
@@ -39,12 +39,12 @@ jobs:
       - name: Checkout du code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 
+          fetch-depth: 0
 
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: "3.10"
 
       - name: Analyse Ruff
         id: ruff
@@ -193,7 +193,7 @@ jobs:
   #       run: |
   #         docker build -t twitter_g:test .
   #         docker run -d --name webapp -p 8000:8000 twitter_g:test
-  #         sleep 15 
+  #         sleep 15
 
   #     - name: Scan Wapiti
   #       id: wapiti
@@ -223,7 +223,7 @@ jobs:
   #         docker network create zap-network
   #         docker build -t twitter_g:test .
   #         docker run -d --name webapp --network zap-network -p 8000:8000 twitter_g:test
-  #         sleep 15 
+  #         sleep 15
 
   #     - name: Scan OWASP ZAP
   #       id: zap
@@ -248,7 +248,7 @@ jobs:
   # --- JOB 8 : Deploiement final ---
   deploy:
     runs-on: ubuntu-latest
-    needs: [ ]
+    needs: []
     steps:
       - name: Checkout du code
         uses: actions/checkout@v4
@@ -277,13 +277,13 @@ jobs:
           echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
           echo "| Deploiement DockerHub | ${{ steps.push.outcome == 'success' && 'Reussi' || 'Echec' }} |" >> $GITHUB_STEP_SUMMARY
 
-# --- JOB 9 : Release finale sur GHCR ---
+  # --- JOB 9 : Release finale sur GHCR ---
   release-ghcr:
     runs-on: ubuntu-latest
     needs: deploy
     permissions:
       contents: read
-      packages: write 
+      packages: write
     # Suppression du 'if' restrictif pour que ça marche sur toutes les branches
     steps:
       - name: Checkout du code
@@ -296,15 +296,20 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extraction des métadonnées (Tags & Labels)
+      - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
-            type=sha,format=short
-            type=raw,value=main,enable=${{ github.ref == 'refs/heads/main' }}
-            type=raw,value=dev,enable=${{ github.ref == 'refs/heads/dev' }}
+            # 1. Tag latest (toujours produit)
+            type=raw,value=latest
+
+            # 2. Tag dev (toujours produit)
+            type=raw,value=dev
+
+            # 3. Tag SHA (ex: sha-5cfb2b5)
+            type=sha,format=short,prefix=sha-
           # Force le nom en minuscule (GHCR n'aime pas les majuscules des pseudos)
           flavor: |
             latest=auto
