@@ -1,34 +1,29 @@
-# --- ÉTAPE 1 : BUILDER (Construction) ---
-# On utilise une image complète pour installer les dépendances
+# --- ÉTAPE 1 : BUILDER ---
 FROM python:3.11-slim AS builder
 
 WORKDIR /app
 
-# Installation des dépendances dans un répertoire spécifique
 COPY requirements.txt .
-RUN pip install --user --no-cache-dir -r requirements.txt
+# On installe directement dans un dossier local pour être sûr du chemin
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
-# --- ÉTAPE 2 : RUNTIME (Exécution) ---
-# Utilisation de l'image Distroless (Bonus : pas de shell, pas de root)
-FROM gcr.io/distroless/python3
+# --- ÉTAPE 2 : RUNTIME (Distroless) ---
+FROM gcr.io/distroless/python3-debian12 
 
 WORKDIR /app
 
-# Copie uniquement les dépendances installées (Challenge : réduction de surface)
-COPY --from=builder /root/.local /root/.local
-# Copie uniquement le code nécessaire (évite de copier .git, tests, etc.)
+# Copie les libs depuis le dossier /install du builder
+COPY --from=builder /install /usr/local
+
+# Copie ton code
 COPY app/ ./app/
 COPY run.py .
 
-# Configuration de l'environnement Python pour trouver les libs
-ENV PATH=/root/.local/bin:$PATH
-ENV PYTHONPATH=/root/.local/lib/python3.11/site-packages
+# Pas besoin de modifier PYTHONPATH si on copie dans /usr/local
+# car c'est le chemin par défaut de Python
 
-# Force l'utilisation d'un utilisateur non-privilégié (Challenge : Non-root)
 USER nonroot
-
-# Port d'écoute de ton app Flask/FastAPI
 EXPOSE 5000
 
-# Commande de lancement (Distroless n'a pas besoin de "python" devant car c'est l'entrypoint)
+# Sur Distroless, l'entrypoint est déjà python, on passe juste le fichier
 CMD ["run.py"]
