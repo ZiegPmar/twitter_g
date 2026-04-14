@@ -280,7 +280,7 @@ jobs:
   # --- Etape 5 : Release finale sur GHCR ---
   release-ghcr:
     runs-on: ubuntu-latest
-    needs: [dast-and-deploy] # Ne se lance que si le scan dynamique est OK
+    needs: deploy 
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' 
     steps:
       - name: Checkout du code
