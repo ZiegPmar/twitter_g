@@ -12,28 +12,28 @@ permissions:
 
 jobs:
   # --- JOB 0 : Détection de changements ---
-  check-changes:
-    runs-on: ubuntu-latest
-    outputs:
-      python_changed: ${{ steps.filter.outputs.any_changed }}
-    steps:
-      - name: Checkout du code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 
+  # check-changes:
+  #   runs-on: ubuntu-latest
+  #   outputs:
+  #     python_changed: ${{ steps.filter.outputs.any_changed }}
+  #   steps:
+  #     - name: Checkout du code
+  #       uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0 
 
-      - name: Vérifier fichiers Python
-        id: filter
-        uses: tj-actions/changed-files@v44
-        with:
-          files: |
-            **/*.py
-            requirements.txt
+  #     - name: Vérifier fichiers Python
+  #       id: filter
+  #       uses: tj-actions/changed-files@v44
+  #       with:
+  #         files: |
+  #           **/*.py
+  #           requirements.txt
 
   # --- JOB 1 : Qualité du code et Secrets ---
   lint-and-scan:
-    needs: [check-changes]
-    if: needs.check-changes.outputs.python_changed == 'true'
+    # needs: [check-changes]
+    # if: needs.check-changes.outputs.python_changed == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout du code
