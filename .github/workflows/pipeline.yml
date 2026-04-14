@@ -81,8 +81,8 @@ jobs:
 
   # --- JOB 2 : Analyse statique (SAST) ---
   sast-analysis:
-    needs: [check-changes]
-    if: needs.check-changes.outputs.python_changed == 'true'
+    # needs: [check-changes]
+    # if: needs.check-changes.outputs.python_changed == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout du code
@@ -105,8 +105,8 @@ jobs:
 
   # --- JOB 3 : Analyse des dependances (SCA) ---
   sca-analysis:
-    needs: [check-changes]
-    if: needs.check-changes.outputs.python_changed == 'true'
+    # needs: [check-changes]
+    # if: needs.check-changes.outputs.python_changed == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout du code
