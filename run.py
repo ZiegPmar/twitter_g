@@ -9,3 +9,6 @@ if __name__ == "__main__":
 
     # Le "# nosec B104" dit à Bandit d'ignorer l'alerte sur l'adresse 0.0.0.0
     app.run(debug=debug_mode, host='0.0.0.0', port=8000)  
+
+
+    buuuuuggg
