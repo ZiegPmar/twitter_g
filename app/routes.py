@@ -1125,3 +1125,28 @@ def mark_as_read(user_id):
         db.commit()
 
     return {"success": True}
+
+# --- LAB 3 : HEALTHCHECK ---
+
+@bp.route("/health")
+def health():
+    # 1. Obligatoire : Renvoie HTTP 200 OK
+    # 2. Bonus : Retourne des infos sur l'état de l'app (status, temps, db)
+    health_report = {
+        "status": "UP",
+        "timestamp": datetime.now().isoformat(),
+        "database": "UNKNOWN"
+    }
+    
+    try:
+        # On vérifie si la base de données répond
+        db = get_db()
+        with db.cursor() as cursor:
+            cursor.execute("SELECT 1")
+        health_report["database"] = "CONNECTED"
+        return health_report, 200
+    except Exception as e:
+        health_report["status"] = "DEGRADED"
+        health_report["database"] = "ERROR"
+        health_report["error_details"] = str(e)
+        return health_report, 503
