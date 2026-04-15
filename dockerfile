@@ -1,44 +1,32 @@
-# --- ÉTAPE 1 : BUILDER (Construction) ---
+# --- ÉTAPE 1 : BUILDER ---
 FROM python:3.11-slim AS builder
 
-# Définition du répertoire de travail
 WORKDIR /app
 
-# Copie du fichier de dépendances
 COPY requirements.txt .
+# On installe dans /install au lieu de /root/.local pour éviter les soucis de droits
+RUN pip install --prefix=/install --no-cache-dir -r requirements.txt
 
-# Installation des dépendances dans un dossier spécifique (/app/package)
-# Cela permet d'isoler les bibliothèques pour la copie vers l'image finale
-RUN pip install --no-cache-dir --target=/app/package -r requirements.txt
-
-# --- ÉTAPE 2 : RUNTIME (Exécution) ---
-# Utilisation de Distroless Debian 12 (plus récent, compatible Python 3.11)
-FROM gcr.io/distroless/python3-debian12
+# --- ÉTAPE 2 : RUNTIME ---
+FROM gcr.io/distroless/python3-debian12:debug # Le tag debug aide si tu dois inspecter
 
 WORKDIR /app
 
-# Copie des bibliothèques installées depuis l'étape builder
-COPY --from=builder /app/package /app/package
+# On copie les libs depuis /install vers un dossier accessible
+COPY --from=builder /install /usr/local
 
-# Copie du code source de l'application
+# Copie du code
 COPY app/ ./app/
 COPY run.py .
 
-# --- CONFIGURATION ENVIRONNEMENT ---
-# Variable CRUCIALE : on force Python à inclure le dossier des packages dans son chemin de recherche
-ENV PYTHONPATH=/app/package
+# Configuration pour que Python trouve les modules dans /usr/local
+ENV PYTHONPATH=/usr/local/lib/python3.11/site-packages
 
-# Désactivation de la génération de fichiers .pyc (plus léger pour le conteneur)
-ENV PYTHONDONTWRITEBYTECODE=1
-# Force l'affichage des logs en temps réel dans Render
-ENV PYTHONUNBUFFERED=1
-
-# Utilisation de l'utilisateur non-privilégié inclus dans l'image Distroless
+# Utilisateur sécurisé
 USER nonroot
 
-# Port d'écoute (5000 par défaut pour Flask)
+# Port par défaut Render (souvent 10000, mais 5000 fonctionne si configuré)
 EXPOSE 5000
 
-# Lancement de l'application
-# Sur Distroless, l'entrypoint est déjà l'interpréteur python
+# Sur Distroless Python, l'entrypoint est déjà 'python', on passe juste le fichier
 CMD ["run.py"]
