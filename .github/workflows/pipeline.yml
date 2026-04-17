@@ -346,7 +346,7 @@ jobs:
         with:
           service-id: ${{ github.ref == 'refs/heads/main' && secrets.RENDER_SERVICE_ID_PROD || secrets.RENDER_SERVICE_ID_TEST }}
           api-key: ${{ secrets.RENDER_API_KEY }}
-          wait-for-success: true # Crucial : attend que le health check soit au vert
+          wait-for-success: true 
 
       # Logique de Rollback en cas d'échec du step précédent
       - name: Rollback on Failure
