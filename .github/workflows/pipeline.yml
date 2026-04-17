@@ -331,46 +331,81 @@ jobs:
           echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
           echo "| GHCR | ${{ steps.push-ghcr.outcome == 'success' && '✅ Publiée' || '❌ Échec' }} |" >> $GITHUB_STEP_SUMMARY
 
-# --- JOB 10 : Déploiement sur Render avec Rollback ---
+# --- JOB 10 : Déploiement sur Render avec Health Check et Rollback ---
   deploy-render:
     runs-on: ubuntu-latest
-    needs: release-ghcr
+    needs: release-ghcr # On attend que l'image soit sur GHCR
     steps:
-      - name: Checkout code
+      - name: Checkout du code
         uses: actions/checkout@v4
 
-      # Déploiement et attente du résultat
-      - name: Deploy to Render
-        id: deploy
-        uses: johnbeynon/render-deploy-action@v0.0.8
-        with:
-          service-id: ${{ github.ref == 'refs/heads/main' && secrets.RENDER_SERVICE_ID_PROD || secrets.RENDER_SERVICE_ID_TEST }}
-          api-key: ${{ secrets.RENDER_API_KEY }}
-          wait-for-success: true 
-
-      # Logique de Rollback en cas d'échec du step précédent
-      - name: Rollback on Failure
-        if: failure() && steps.deploy.outcome == 'failure'
+      - name: Déclencher le déploiement sur Render
+        id: trigger_deploy
         run: |
-          echo "❌ Le déploiement a échoué. Tentative de rollback..."
-          SERVICE_ID=${{ github.ref == 'refs/heads/main' && secrets.RENDER_SERVICE_ID_PROD || secrets.RENDER_SERVICE_ID_TEST }}
+          # Sélection de l'URL du Hook selon la branche
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            HOOK_URL="${{ secrets.RENDER_DEPLOY_HOOK_PROD }}"
+            echo "ENV_NAME=Production" >> $GITHUB_ENV
+            echo "SERVICE_ID=${{ secrets.RENDER_SERVICE_ID_PROD }}" >> $GITHUB_ENV
+            echo "APP_URL=https://twitter-g-dev.onrender.com/" >> $GITHUB_ENV # <--- CHANGE MOI
+          else
+            HOOK_URL="${{ secrets.RENDER_DEPLOY_HOOK_TEST }}"
+            echo "ENV_NAME=Test" >> $GITHUB_ENV
+            echo "SERVICE_ID=${{ secrets.RENDER_SERVICE_ID_TEST }}" >> $GITHUB_ENV
+            echo "APP_URL=https://twitter-g-dev.onrender.com/" >> $GITHUB_ENV # <--- CHANGE MOI
+          fi
           
-          # On récupère l'ID du déploiement précédent qui avait réussi
+          echo "Déploiement sur $ENV_NAME..."
+          curl -f "$HOOK_URL"
+
+      - name: Health Check (Attente de disponibilité)
+        id: health_check
+        run: |
+          echo "Vérification de la santé de l'application sur $APP_URL"
+          # On attend 30s que Render commence le build
+          sleep 30 
+          
+          # Tentative de connexion pendant 5 minutes (15 essais de 20s)
+          for i in {1..15}; do
+            STATUS=$(curl -o /dev/null -s -w "%{http_code}" "$APP_URL")
+            if [ "$STATUS" -eq 200 ]; then
+              echo "✅ Succès ! L'application répond (HTTP 200)."
+              exit 0
+            fi
+            echo "⏳ Tentative $i/15 : Statut actuel $STATUS. Attente..."
+            sleep 20
+          done
+          
+          echo "❌ L'application ne répond pas après 5 minutes."
+          exit 1
+
+      - name: 🚨 AUTO-ROLLBACK (en cas d'échec)
+        if: failure() && steps.health_check.outcome == 'failure'
+        run: |
+          echo "## ⚠️ Échec détecté : Tentative de Rollback..." >> $GITHUB_STEP_SUMMARY
+          
+          # 1. Récupérer l'ID du dernier déploiement réussi (status=live)
+          # On prend le 2ème de la liste car le 1er est celui qui vient d'échouer
           PREVIOUS_DEPLOY_ID=$(curl -s -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
             "https://api.render.com/v1/services/$SERVICE_ID/deploys?status=live&limit=2" \
             | jq -r '.[1].id')
 
-          if [ "$PREVIOUS_DEPLOY_ID" != "null" ]; then
-            echo "Réactivation du déploiement : $PREVIOUS_DEPLOY_ID"
+          if [ "$PREVIOUS_DEPLOY_ID" != "null" ] && [ -n "$PREVIOUS_DEPLOY_ID" ]; then
+            echo "Rollback vers le déploiement : $PREVIOUS_DEPLOY_ID"
             curl -X POST -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
-              -H "Accept: application/json" \
-              "https://api.render.com/v1/services/$SERVICE_ID/deploys/$PREVIOUS_DEPLOY_ID/rollback"
+                 -H "Accept: application/json" \
+                 "https://api.render.com/v1/services/$SERVICE_ID/deploys/$PREVIOUS_DEPLOY_ID/rollback"
+            echo "✅ Ordre de rollback envoyé avec succès." >> $GITHUB_STEP_SUMMARY
           else
-            echo "Impossible de trouver un déploiement précédent valide pour le rollback."
+            echo "❌ Erreur : Impossible de trouver un déploiement précédent valide." >> $GITHUB_STEP_SUMMARY
+            exit 1
           fi
 
-      - name: Resume Render
+      - name: Resume Final
         if: always()
         run: |
-          echo "## 🌐 Recapitulatif Render" >> $GITHUB_STEP_SUMMARY
-          echo "| Statut Final | ${{ steps.deploy.outcome == 'success' && '✅ Succès' || '❌ Échec / Rollback tenté' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "## 🌐 Rapport de Déploiement" >> $GITHUB_STEP_SUMMARY
+          echo "| Étape | Résultat |" >> $GITHUB_STEP_SUMMARY
+          echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
+          echo "| Déploiement initial | ${{ steps.trigger_deploy.outcome }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Health Check | ${{ steps.health_check.outcome }} |" >> $GITHUB_STEP_SUMMARY
