@@ -5,14 +5,16 @@ services:
       dockerfile: dockerfile
     restart: always
     environment:
-      - FLASK_DEBUG=false # Désactive le debug en prod
+      - FLASK_DEBUG=false
       - SECRET_KEY=h4ufhuzehphduhs144fhuehôùsgdfpieh44vsdph5
-      - PYTHONUNBUFFERED=1
-    # On n'expose plus le port 8000 au monde extérieur, seul Nginx y touchera
     expose:
       - "8000"
+    volumes:
+      # On lie le dossier local 'app/static' au volume Docker
+      - ./app/static:/app/app/static 
+      - static_content:/app/app/static
     deploy:
-      replicas: 3 # Lance 3 instances par défaut
+      replicas: 3
 
   proxy:
     image: nginx:latest
@@ -21,6 +23,11 @@ services:
       - "80:80"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      # Nginx va lire dans ce même volume
+      - static_content:/usr/share/nginx/html/static:ro 
     depends_on:
       - app
     restart: always
+
+volumes:
+  static_content:
