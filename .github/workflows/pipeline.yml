@@ -1,4 +1,4 @@
-name: CI Qualite et Securite
+name: CI/CD Qualite, Securite et Swarm
 
 on:
   push:
@@ -9,9 +9,10 @@ on:
 permissions:
   contents: read
   pull-requests: read
+  packages: write 
 
 jobs:
-  # --- JOB 0 : Détection de changements ---
+  # --- JOB 0 : Détection de changements (Désactivé) ---
   # check-changes:
   #   runs-on: ubuntu-latest
   #   outputs:
@@ -21,7 +22,6 @@ jobs:
   #       uses: actions/checkout@v4
   #       with:
   #         fetch-depth: 0
-
   #     - name: Vérifier fichiers Python
   #       id: filter
   #       uses: tj-actions/changed-files@v44
@@ -30,10 +30,12 @@ jobs:
   #           **/*.py
   #           requirements.txt
 
+  # ==========================================
+  # PHASE 1 : ANALYSES DU CODE (Exécutées en parallèle)
+  # ==========================================
+
   # --- JOB 1 : Qualité du code et Secrets ---
   lint-and-scan:
-    # needs: [check-changes]
-    # if: needs.check-changes.outputs.python_changed == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout du code
@@ -81,8 +83,6 @@ jobs:
 
   # --- JOB 2 : Analyse statique (SAST) ---
   sast-analysis:
-    # needs: [check-changes]
-    # if: needs.check-changes.outputs.python_changed == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout du code
@@ -105,8 +105,6 @@ jobs:
 
   # --- JOB 3 : Analyse des dependances (SCA) ---
   sca-analysis:
-    # needs: [check-changes]
-    # if: needs.check-changes.outputs.python_changed == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout du code
@@ -127,128 +125,140 @@ jobs:
           echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
           echo "| Pip-audit (SCA) | ${{ steps.pipaudit.outcome == 'success' && 'Succes' || 'Dependances vulnerables' }} |" >> $GITHUB_STEP_SUMMARY
 
+  # ==========================================
+  # PHASE 2 : ANALYSES DOCKER (Attend la Phase 1)
+  # ==========================================
+
   # --- JOB 4 : Trivy Config (IaC) ---
-  # trivy-config:
-  #   runs-on: ubuntu-latest
-  #   needs: [lint-and-scan, sast-analysis, sca-analysis]
-  #   steps:
-  #     - name: Checkout du code
-  #       uses: actions/checkout@v4
+  trivy-config:
+    runs-on: ubuntu-latest
+    needs: [lint-and-scan, sast-analysis, sca-analysis]
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
 
-  #     - name: Trivy (Config IaC)
-  #       id: trivy_config
-  #       uses: aquasecurity/trivy-action@master
-  #       with:
-  #         scan-type: 'config'
-  #         exit-code: '1'
-  #         severity: 'HIGH,CRITICAL'
-  #       continue-on-error: false
+      - name: Trivy (Config IaC)
+        id: trivy_config
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          exit-code: '1'
+          severity: 'HIGH,CRITICAL'
+        continue-on-error: false
 
-  #     - name: Resume Trivy Config
-  #       if: always()
-  #       run: |
-  #         echo "## Recapitulatif Trivy Config" >> $GITHUB_STEP_SUMMARY
-  #         echo "| Scan | Resultat |" >> $GITHUB_STEP_SUMMARY
-  #         echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
-  #         echo "| Trivy (Config) | ${{ steps.trivy_config.outcome == 'success' && 'Conforme' || 'Non-conforme' }} |" >> $GITHUB_STEP_SUMMARY
+      - name: Resume Trivy Config
+        if: always()
+        run: |
+          echo "## Recapitulatif Trivy Config" >> $GITHUB_STEP_SUMMARY
+          echo "| Scan | Resultat |" >> $GITHUB_STEP_SUMMARY
+          echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
+          echo "| Trivy (Config) | ${{ steps.trivy_config.outcome == 'success' && 'Conforme' || 'Non-conforme' }} |" >> $GITHUB_STEP_SUMMARY
 
-  # # --- JOB 5 : Trivy Image ---
-  # trivy-image:
-  #   runs-on: ubuntu-latest
-  #   needs: [lint-and-scan, sast-analysis, sca-analysis]
-  #   steps:
-  #     - name: Checkout du code
-  #       uses: actions/checkout@v4
+  # --- JOB 5 : Trivy Image ---
+  trivy-image:
+    runs-on: ubuntu-latest
+    needs: [lint-and-scan, sast-analysis, sca-analysis]
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
 
-  #     - name: Build Image Docker
-  #       run: docker build -t twitter_g:${{ github.sha }} .
+      - name: Build Image Docker
+        run: docker build -t twitter_g:${{ github.sha }} .
 
-  #     - name: Trivy (Image)
-  #       id: trivy_image
-  #       uses: aquasecurity/trivy-action@master
-  #       with:
-  #         image-ref: 'twitter_g:${{ github.sha }}'
-  #         format: 'table'
-  #         exit-code: '1'
-  #         severity: 'HIGH'
-  #       continue-on-error: true
+      - name: Trivy (Image)
+        id: trivy_image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'twitter_g:${{ github.sha }}'
+          format: 'table'
+          exit-code: '1'
+          severity: 'HIGH'
+        continue-on-error: true
 
-  #     - name: Resume Trivy Image
-  #       if: always()
-  #       run: |
-  #         echo "## Recapitulatif Trivy Image" >> $GITHUB_STEP_SUMMARY
-  #         echo "| Scan | Resultat |" >> $GITHUB_STEP_SUMMARY
-  #         echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
-  #         echo "| Trivy (Image) | ${{ steps.trivy_image.outcome == 'success' && 'Propre' || 'Vulnerabilites detectees' }} |" >> $GITHUB_STEP_SUMMARY
+      - name: Resume Trivy Image
+        if: always()
+        run: |
+          echo "## Recapitulatif Trivy Image" >> $GITHUB_STEP_SUMMARY
+          echo "| Scan | Resultat |" >> $GITHUB_STEP_SUMMARY
+          echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
+          echo "| Trivy (Image) | ${{ steps.trivy_image.outcome == 'success' && 'Propre' || 'Vulnerabilites detectees' }} |" >> $GITHUB_STEP_SUMMARY
+
+  # ==========================================
+  # PHASE 3 : ANALYSES DYNAMIQUES / DAST (Attend la Phase 2)
+  # ==========================================
 
   # --- JOB 6 : Scan Wapiti ---
-  # wapiti-scan:
-  #   runs-on: ubuntu-latest
-  #   needs: [trivy-image, trivy-config]
-  #   steps:
-  #     - name: Checkout du code
-  #       uses: actions/checkout@v4
+  wapiti-scan:
+    runs-on: ubuntu-latest
+    needs: [trivy-image, trivy-config]
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
 
-  #     - name: Lancement Application
-  #       run: |
-  #         docker build -t twitter_g:test .
-  #         docker run -d --name webapp -p 8000:8000 twitter_g:test
-  #         sleep 15
+      - name: Lancement Application
+        run: |
+          docker build -t twitter_g:test .
+          docker run -d --name webapp -p 8000:8000 twitter_g:test
+          sleep 15
 
-  #     - name: Scan Wapiti
-  #       id: wapiti
-  #       run: |
-  #         pip install wapiti3
-  #         mkdir -p results
-  #         wapiti -u http://localhost:8000 -f html -o results/wapiti_report.html
-  #       continue-on-error: true
+      - name: Scan Wapiti
+        id: wapiti
+        run: |
+          pip install wapiti3
+          mkdir -p results
+          wapiti -u http://localhost:8000 -f html -o results/wapiti_report.html
+        continue-on-error: true
 
-  #     - name: Upload Artefact Wapiti
-  #       if: always()
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: Rapport-Wapiti
-  #         path: results/wapiti_report.html
+      - name: Upload Artefact Wapiti
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Rapport-Wapiti
+          path: results/wapiti_report.html
 
   # --- JOB 7 : Scan OWASP ZAP ---
-  # zap-scan:
-  #   runs-on: ubuntu-latest
-  #   needs: [trivy-image, trivy-config]
-  #   steps:
-  #     - name: Checkout du code
-  #       uses: actions/checkout@v4
+  zap-scan:
+    runs-on: ubuntu-latest
+    needs: [trivy-image, trivy-config]
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
 
-  #     - name: Lancement Application
-  #       run: |
-  #         docker network create zap-network
-  #         docker build -t twitter_g:test .
-  #         docker run -d --name webapp --network zap-network -p 8000:8000 twitter_g:test
-  #         sleep 15
+      - name: Lancement Application
+        run: |
+          docker network create zap-network
+          docker build -t twitter_g:test .
+          docker run -d --name webapp --network zap-network -p 8000:8000 twitter_g:test
+          sleep 15
 
-  #     - name: Scan OWASP ZAP
-  #       id: zap
-  #       run: |
-  #         sudo mkdir -p $(pwd)/zap/wrk
-  #         sudo chmod -R 777 $(pwd)/zap/wrk
-  #         docker run --rm \
-  #           --network zap-network \
-  #           -v $(pwd)/zap/wrk:/zap/wrk/:rw \
-  #           -u root \
-  #           ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
-  #           -t http://webapp:8000 -g gen.conf -r report.html
-  #       continue-on-error: true
+      - name: Scan OWASP ZAP
+        id: zap
+        run: |
+          sudo mkdir -p $(pwd)/zap/wrk
+          sudo chmod -R 777 $(pwd)/zap/wrk
+          docker run --rm \
+            --network zap-network \
+            -v $(pwd)/zap/wrk:/zap/wrk/:rw \
+            -u root \
+            ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
+            -t http://webapp:8000 -g gen.conf -r report.html
+        continue-on-error: true
 
-  #     - name: Upload Artefact ZAP
-  #       if: always()
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: Rapport-ZAP
-  #         path: zap/wrk/report.html
+      - name: Upload Artefact ZAP
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Rapport-ZAP
+          path: zap/wrk/report.html
 
-  # --- JOB 8 : Deploiement final ---
+  # ==========================================
+  # PHASE 4 : REGISTRES ET DÉPLOIEMENT (Attend la Phase 3)
+  # ==========================================
+
+  # --- JOB 8 : Deploiement final (DockerHub) ---
   deploy:
     runs-on: ubuntu-latest
-    needs: []
+    needs: [wapiti-scan, zap-scan]
     steps:
       - name: Checkout du code
         uses: actions/checkout@v4
@@ -280,11 +290,7 @@ jobs:
   # --- JOB 9 : Release finale sur GHCR ---
   release-ghcr:
     runs-on: ubuntu-latest
-    needs: deploy
-    permissions:
-      contents: read
-      packages: write
-    # Suppression du 'if' restrictif pour que ça marche sur toutes les branches
+    needs: [deploy]
     steps:
       - name: Checkout du code
         uses: actions/checkout@v4
@@ -302,15 +308,9 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
-            # 1. Tag latest (toujours produit)
             type=raw,value=latest
-
-            # 2. Tag dev (toujours produit)
             type=raw,value=dev
-
-            # 3. Tag SHA (ex: sha-5cfb2b5)
             type=sha,format=short,prefix=sha-
-          # Force le nom en minuscule (GHCR n'aime pas les majuscules des pseudos)
           flavor: |
             latest=auto
 
@@ -331,81 +331,38 @@ jobs:
           echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
           echo "| GHCR | ${{ steps.push-ghcr.outcome == 'success' && '✅ Publiée' || '❌ Échec' }} |" >> $GITHUB_STEP_SUMMARY
 
-# --- JOB 10 : Déploiement sur Render avec Health Check et Rollback ---
-  deploy-render:
+  # --- JOB 10 : Déploiement sur Docker Swarm ---
+  deploy-swarm:
     runs-on: ubuntu-latest
-    needs: release-ghcr # On attend que l'image soit sur GHCR
+    needs: [release-ghcr]
+    if: github.ref == 'refs/heads/main' 
     steps:
       - name: Checkout du code
         uses: actions/checkout@v4
 
-      - name: Déclencher le déploiement sur Render
-        id: trigger_deploy
-        run: |
-          # Sélection de l'URL du Hook selon la branche
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            HOOK_URL="${{ secrets.RENDER_DEPLOY_HOOK_PROD }}"
-            echo "ENV_NAME=Production" >> $GITHUB_ENV
-            echo "SERVICE_ID=${{ secrets.RENDER_SERVICE_ID_PROD }}" >> $GITHUB_ENV
-            echo "APP_URL=https://twitter-g-dev.onrender.com/" >> $GITHUB_ENV # <--- CHANGE MOI
-          else
-            HOOK_URL="${{ secrets.RENDER_DEPLOY_HOOK_TEST }}"
-            echo "ENV_NAME=Test" >> $GITHUB_ENV
-            echo "SERVICE_ID=${{ secrets.RENDER_SERVICE_ID_TEST }}" >> $GITHUB_ENV
-            echo "APP_URL=https://twitter-g-dev.onrender.com/" >> $GITHUB_ENV # <--- CHANGE MOI
-          fi
-          
-          echo "Déploiement sur $ENV_NAME..."
-          curl -f "$HOOK_URL"
+      - name: Copier le fichier docker-compose.yml sur le serveur
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "docker-compose.yml"
+          target: "/home/${{ secrets.SERVER_USER }}/deploy-twitter/"
 
-      - name: Health Check (Attente de disponibilité)
-        id: health_check
-        run: |
-          echo "Vérification de la santé de l'application sur $APP_URL"
-          # On attend 30s que Render commence le build
-          sleep 30 
-          
-          # Tentative de connexion pendant 5 minutes (15 essais de 20s)
-          for i in {1..15}; do
-            STATUS=$(curl -o /dev/null -s -w "%{http_code}" "$APP_URL")
-            if [ "$STATUS" -eq 200 ]; then
-              echo "✅ Succès ! L'application répond (HTTP 200)."
-              exit 0
-            fi
-            echo "⏳ Tentative $i/15 : Statut actuel $STATUS. Attente..."
-            sleep 20
-          done
-          
-          echo "❌ L'application ne répond pas après 5 minutes."
-          exit 1
-
-      - name: 🚨 AUTO-ROLLBACK (en cas d'échec)
-        if: failure() && steps.health_check.outcome == 'failure'
-        run: |
-          echo "## ⚠️ Échec détecté : Tentative de Rollback..." >> $GITHUB_STEP_SUMMARY
-          
-          # 1. Récupérer l'ID du dernier déploiement réussi (status=live)
-          # On prend le 2ème de la liste car le 1er est celui qui vient d'échouer
-          PREVIOUS_DEPLOY_ID=$(curl -s -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
-            "https://api.render.com/v1/services/$SERVICE_ID/deploys?status=live&limit=2" \
-            | jq -r '.[1].id')
-
-          if [ "$PREVIOUS_DEPLOY_ID" != "null" ] && [ -n "$PREVIOUS_DEPLOY_ID" ]; then
-            echo "Rollback vers le déploiement : $PREVIOUS_DEPLOY_ID"
-            curl -X POST -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
-                 -H "Accept: application/json" \
-                 "https://api.render.com/v1/services/$SERVICE_ID/deploys/$PREVIOUS_DEPLOY_ID/rollback"
-            echo "✅ Ordre de rollback envoyé avec succès." >> $GITHUB_STEP_SUMMARY
-          else
-            echo "❌ Erreur : Impossible de trouver un déploiement précédent valide." >> $GITHUB_STEP_SUMMARY
-            exit 1
-          fi
-
-      - name: Resume Final
-        if: always()
-        run: |
-          echo "## 🌐 Rapport de Déploiement" >> $GITHUB_STEP_SUMMARY
-          echo "| Étape | Résultat |" >> $GITHUB_STEP_SUMMARY
-          echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
-          echo "| Déploiement initial | ${{ steps.trigger_deploy.outcome }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Health Check | ${{ steps.health_check.outcome }} |" >> $GITHUB_STEP_SUMMARY
+      - name: Déployer sur le cluster Swarm
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd /home/${{ secrets.SERVER_USER }}/deploy-twitter/
+            
+            # 1. Authentification au registre (GHCR)
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+            # 2. Lancement du déploiement avec les droits du registre
+            docker stack deploy --with-registry-auth -c docker-compose.yml twitter_stack
+            
+            # 3. Nettoyage des anciennes images non utilisées depuis 24h
+            docker image prune -af --filter "until=24h"
