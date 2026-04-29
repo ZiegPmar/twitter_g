@@ -358,11 +358,11 @@ jobs:
           script: |
             cd /home/${{ secrets.SERVER_USER }}/deploy-twitter/
             
-            # 1. Authentification au registre (GHCR)
+            # 1. Authentification
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
-            # 2. Lancement du déploiement avec les droits du registre
+            # 2. Déploiement (Swarm s'occupe de lier les secrets externes)
             docker stack deploy --with-registry-auth -c docker-compose.yml twitter_stack
             
-            # 3. Nettoyage des anciennes images non utilisées depuis 24h
+            # 3. Nettoyage
             docker image prune -af --filter "until=24h"
