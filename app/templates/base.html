@@ -35,11 +35,14 @@
 
     {% include "partials/sidebar_right.html" %}
 
-    {% block modal %}{% endblock %}
+    {% block modal %}
+    {% include "partials/publish_modal.html" %}
+    {% endblock %}
 
     {% block base_scripts %}
-    <script
-      src="{{ url_for('static', filename='javascript/meteo.js') }}"></script>
+    <script src="{{ url_for('static', filename='javascript/meteo.js') }}"></script>
+    
+    <script src="{{ url_for('static', filename='javascript/menu_publier.js') }}"></script>
     {% endblock %}
 
     {% block extra_scripts %}{% endblock %}

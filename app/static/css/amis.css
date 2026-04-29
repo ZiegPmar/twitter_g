@@ -1,77 +1,99 @@
-/* ============================================================
-   SECTION CENTRALE - PAGE AMIS (CORRIGÉ)
-   ============================================================ */
-
-   .layout {
+/* --- Structure de la page --- */
+.layout {
     display: flex;
     justify-content: center;
     background-color: #000;
-    /* On retire le min-height ici pour éviter que les bordures ne filent jusqu'en bas */
+    min-height: 100vh;
 }
 
 .feed {
     width: 100%;
     max-width: 600px;
-    /* Ajout de la bordure haute manquante */
-    border-top: 1px solid #333; 
+    background-color: #000;
     border-left: 1px solid #333;
     border-right: 1px solid #333;
-    /* La bordure basse fermera le carré quand le contenu s'arrête */
+    border-top: 1px solid #333; /* Bordure haute du carré */
     border-bottom: 1px solid #333;
-    margin: 0 auto;
-    background-color: #000;
-    /* Pour s'assurer que le carré ne soit pas "troué" en bas */
-    height: fit-content; 
+    height: fit-content;
 }
 
-/* En-tête de page */
+/* --- Header et Onglets --- */
 .page-header {
-    padding: 15px;
     border-bottom: 1px solid #333;
+    background-color: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(12px);
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
-.page-header h1 {
-    color: #fff;
+.header-top h1 {
+    color: white;
+    padding: 15px;
     font-size: 1.25rem;
-    font-weight: 700;
+    font-weight: 800;
     margin: 0;
 }
 
-/* ============================================================
-   STYLISATION DES TITRES DE SECTION
-   ============================================================ */
+.tabs {
+    display: flex;
+    width: 100%;
+}
 
-.friends-section {
+.tab {
+    flex: 1;
+    text-align: center;
+    padding: 15px 0;
+    cursor: pointer;
+    color: #71767b;
+    font-weight: 700;
+    position: relative;
+    transition: background 0.2s;
+}
+
+.tab:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.tab.active {
+    color: white;
+}
+
+/* La ligne bleue horizontale de l'onglet actif (exactement comme le screen) */
+.tab.active span::after {
+    content: "";
+    position: absolute;
+    bottom: -15px; /* Aligné sur la bordure basse du header */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px; /* Longueur de la barre bleue */
+    height: 4px;
+    background-color: #1d9bf0;
+    border-radius: 99px;
+}
+
+/* --- Affichage des listes --- */
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.friends-list {
     padding: 20px 15px;
 }
 
-.friends-section h2 {
-    color: #fff;
-    font-size: 1.1rem;
-    font-weight: 700;
-    margin: 0 0 15px 0;
-    padding-bottom: 8px;
-    border-bottom: 2px solid #1d9bf0;
-    display: inline-block;
-}
-
-/* ============================================================
-   CARTES UTILISATEUR
-   ============================================================ */
-
+/* --- Cartes Utilisateurs --- */
 .user-card {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 15px;
-    margin-bottom: 12px;
+    padding: 12px 16px;
     border: 1px solid #333;
-    border-radius: 15px;
-    transition: background-color 0.2s ease;
-}
-
-.user-card:hover {
-    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    margin-bottom: 12px;
 }
 
 .user-info-flex {
@@ -88,29 +110,36 @@
     object-fit: cover;
 }
 
-.user-card .names {
-    display: flex;
-    flex-direction: column;
-}
-
-.user-card .display-name {
-    color: #fff;
+.display-name {
+    color: white;
     font-weight: 700;
+    display: block;
 }
 
-.user-card .username {
+.username {
     color: #71767b;
     font-size: 0.9rem;
 }
 
-/* Bouton Voir */
-.btn-view {
-    background-color: transparent;
-    color: #fff;
-    border: 1px solid #536471;
-    border-radius: 999px;
-    padding: 6px 16px;
+/* --- Bouton Voir --- */
+.btn-voir {
+    color: white;
+    border: 1px solid white;
+    border-radius: 20px;
+    padding: 5px 18px;
     font-size: 0.85rem;
     font-weight: 700;
     text-decoration: none;
+    transition: all 0.2s;
+}
+
+.btn-voir:hover {
+    background-color: white;
+    color: black;
+}
+
+.empty-msg {
+    color: #71767b;
+    text-align: center;
+    padding: 40px;
 }
