@@ -12,7 +12,7 @@ permissions:
   packages: write 
 
 jobs:
-  # --- JOB 0 : Détection de changements (Désactivé) ---
+  # --- JOB 0 : Détection de changements (désactivé pour test) ---
   # check-changes:
   #   runs-on: ubuntu-latest
   #   outputs:
